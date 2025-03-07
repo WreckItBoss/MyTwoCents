@@ -1,0 +1,18 @@
+# macOS system files
+.DS_Store
+
+# Shell and config files
+.bashrc
+.bash_profile
+.zshrc
+
+# Editor swap files
+*.swp
+
+# AWS Amplify and dependencies
+amplify/
+plugins.json
+node_modules/
+dist/
+
+# Any other files you don’t want tracked
