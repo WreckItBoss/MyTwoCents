@@ -1,0 +1,21 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# FastAPI / Dependencies
+.env
+*.sqlite3
+migrations/
+
+# Logs & Cache
+*.log
+.cache/
+*.db
+
+# Vite + TypeScript (if frontend in same repo)
+node_modules/
+dist/
+*.lock
