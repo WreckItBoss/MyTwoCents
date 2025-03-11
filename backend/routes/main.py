@@ -8,7 +8,7 @@ openai_service = OpenAIService()
 
 class PromptInput(BaseModel):
     prompt: str
-
+a
 @app.get("/")
 def read_root():
     return {"message": "Hello, FastAPI!"}
