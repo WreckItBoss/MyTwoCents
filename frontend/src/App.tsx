@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import LandingPage from '../LandingPage/LandingPage'
+import LandingPage from './LandingPage/LandingPage'
 import reactLogo from './assets/react.svg'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import viteLogo from '/vite.svg'

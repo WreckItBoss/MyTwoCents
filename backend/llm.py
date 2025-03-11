@@ -11,22 +11,22 @@ if not api_key:
 
 class OpenAIService:
     def __init__(self, api_key: str = api_key, model: str = "gpt-4"):
-        self.api_key = api_key
+        self.client = openai.OpenAI(api_key=api_key)
         self.model = model
 
     def generate_text(self, prompt: str, max_tokens: Optional[int] = 150) -> str:
         try:
-            response = openai.ChatCompletion.create(
+            response = self.client.chat.completions.create( 
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": prompt},
+                    {"role": "system", "content": "You are a writer."},
+                    {"role": "user", "content": f"Generate me text about {prompt}"},
+
                 ],
                 max_tokens=max_tokens,
                 temperature=0.7,
-                api_key=self.api_key,
             )
-            print(response) 
-            return response["choices"][0]["message"]["content"].strip()
+            print(prompt) 
+            return response.choices[0].message.content.strip()
         except Exception as e:
             return f"Error: {str(e)}"
