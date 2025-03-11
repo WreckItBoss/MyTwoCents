@@ -3,8 +3,9 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from llm import OpenAIService
 
-
 app = FastAPI()
+openai_service = OpenAIService()
+
 class PromptInput(BaseModel):
     prompt: str
 
@@ -14,5 +15,5 @@ def read_root():
 
 @app.post("/generated")
 def generate_text(input_data: PromptInput):
-    generated_text = OpenAIService.generate_text(input_data.prompt)
+    generated_text = openai_service.generate_text(input_data.prompt)
     return {"generated_text": generated_text}
