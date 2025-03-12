@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "./LandingPage.css";
 import Modals from "../assets/Modals/modals";
+import Chat from "../ChatBox/Chat"
 
 const LandingPage: React.FC =()=>{
     const [userInput, setUserInput] = useState<string>("");
@@ -12,6 +13,14 @@ const LandingPage: React.FC =()=>{
         try {
             const {data} = await axios.post("http://127.0.0.1:8000/process-text", {text:userInput});
             setResponse(data.processed_text)
+        } catch (error) {
+            console.error("Error sending data:", error);
+        }
+    }
+    const sendChat = async()=>{
+        try {
+            const {data} = await axios.post("http://127.0.0.1:8000/agent1", {text:userInput});
+            setResponse(data.text_agent1)
         } catch (error) {
             console.error("Error sending data:", error);
         }
@@ -28,10 +37,9 @@ const LandingPage: React.FC =()=>{
             style={{ resize: "none", padding: "10px", fontSize: "16px" }}
         />
         <button onClick={handleSubmit} className="button"> Click here </button>
-        <button onClick={()=>setIsOpen(true)} className="button"> PopUp </button>
+        <button onClick={()=>{setIsOpen(true);sendChat}} className="button"> PopUp </button>
         <Modals isOpen={isOpen} onClose={()=>setIsOpen(false)}>
-        <h2>Modal Title</h2>
-        <p>This is a custom modal in React!</p>
+            <Chat></Chat>
         </Modals>
         <p><strong>Response:</strong> {response}</p>
         </div>
