@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
-
+import { useNavigate } from "react-router-dom";
+import "./LandingPage.css";
 
 const LandingPage: React.FC =()=>{
     const [userInput, setUserInput] = useState<string>("");
@@ -23,10 +24,8 @@ const LandingPage: React.FC =()=>{
             cols={40}
             style={{ resize: "none", padding: "10px", fontSize: "16px" }}
         />
-        <button
-        onClick={handleSubmit}
-        style={{ marginTop: "10px", padding: "8px 12px", fontSize: "16px" , color: "black", backgroundColor: "white",border: "1px solid black",cursor: "pointer"}}
-        />
+        <button onClick={handleSubmit} className="button"> Click here </button>
+        <button onClick={handleSubmit} className="button"> PopUp </button>
         <p><strong>Response:</strong> {response}</p>
         </div>
     );
