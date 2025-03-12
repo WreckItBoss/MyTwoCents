@@ -17,10 +17,19 @@ const LandingPage: React.FC =()=>{
             console.error("Error sending data:", error);
         }
     }
-    const sendChat = async()=>{
+    const sendAgent1 = async()=>{
         try {
             const {data} = await axios.post("http://127.0.0.1:8000/agent1", {text:userInput});
             setResponse(data.text_agent1)
+        } catch (error) {
+            console.error("Error sending data:", error);
+        }
+    }
+
+    const sendAgent2 = async()=>{
+        try {
+            const {data} = await axios.post("http://127.0.0.1:8000/agent2", {text:userInput});
+            setResponse(data.text_agent2)
         } catch (error) {
             console.error("Error sending data:", error);
         }
@@ -37,7 +46,7 @@ const LandingPage: React.FC =()=>{
             style={{ resize: "none", padding: "10px", fontSize: "16px" }}
         />
         <button onClick={handleSubmit} className="button"> Click here </button>
-        <button onClick={()=>{setIsOpen(true);sendChat}} className="button"> PopUp </button>
+        <button onClick={()=>{setIsOpen(true);sendAgent1;sendAgent2}} className="button"> PopUp </button>
         <Modals isOpen={isOpen} onClose={()=>setIsOpen(false)}>
             <Chat></Chat>
         </Modals>
