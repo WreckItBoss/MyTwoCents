@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "./LandingPage.css";
+import Modals from "../assets/Modals/modals";
 
 const LandingPage: React.FC =()=>{
     const [userInput, setUserInput] = useState<string>("");
+    const [isOpen, setIsOpen] = useState(false);
     const [response, setResponse] = useState<string>("");
     const handleSubmit = async() =>{
         try {
@@ -14,6 +16,7 @@ const LandingPage: React.FC =()=>{
             console.error("Error sending data:", error);
         }
     }
+
     return (
         <div>
         <textarea
@@ -25,7 +28,11 @@ const LandingPage: React.FC =()=>{
             style={{ resize: "none", padding: "10px", fontSize: "16px" }}
         />
         <button onClick={handleSubmit} className="button"> Click here </button>
-        <button onClick={handleSubmit} className="button"> PopUp </button>
+        <button onClick={()=>setIsOpen(true)} className="button"> PopUp </button>
+        <Modals isOpen={isOpen} onClose={()=>setIsOpen(false)}>
+        <h2>Modal Title</h2>
+        <p>This is a custom modal in React!</p>
+        </Modals>
         <p><strong>Response:</strong> {response}</p>
         </div>
     );
