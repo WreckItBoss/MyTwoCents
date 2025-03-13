@@ -20,7 +20,7 @@ const LandingPage: React.FC = () => {
             //navigate("/contentpage", {state: {response:data.processed_text}});
             const agent1Response = await sendAgent1();
             const agent2Response = await sendAgent2();
-            navigate("/contentpage", {state: {response:response, responseAgent1: agent1Response, responseAgent2: agent2Response}});
+            navigate("/contentpage", {state: {response:data.processed_text, responseAgent1: agent1Response, responseAgent2: agent2Response}});
         } catch (error) {
             console.error("Error sending data:", error);
         }
@@ -30,6 +30,7 @@ const LandingPage: React.FC = () => {
         try {
             const { data } = await axios.post("http://127.0.0.1:8000/agent1", { text: userInput });
             setResponseAgent1(data.processed_text); 
+            return data.processed_text
         } catch (error) {
             console.error("Error sending data to Agent1:", error);
         }
@@ -39,6 +40,7 @@ const LandingPage: React.FC = () => {
         try {
             const { data } = await axios.post("http://127.0.0.1:8000/agent2", { text: userInput });
             setResponseAgent2(data.processed_text);
+            return data.processed_text
         } catch (error) {
             console.error("Error sending data to Agent2:", error);
         }
@@ -63,16 +65,16 @@ const LandingPage: React.FC = () => {
                         onChange={(e) => setUserInput(e.target.value)}
                         placeholder="Write something here"
                     />
-                    <button onClick={async () => { await handleSubmit();}} className="up-arrow-button">↑</button> {/* Up arrow button */}
+                    <button onClick={async () => { await handleSubmit(); }} className="up-arrow-button">↑</button> {/* Up arrow button */}
                 </div>
 
                 <button onClick={() => setIsOpen(true)} className="button">PopUp</button>
             </div>
-            <Modals isOpen={isOpen} onClose={() => setIsOpen(false)}>
+            {/* <Modals isOpen={isOpen} onClose={() => setIsOpen(false)}>
                 <Chat responseAgent1={responseAgent1} responseAgent2={responseAgent2} />
-            </Modals>
+            </Modals> */}
 
-            <p><strong>Response:</strong> {response}</p>
+            {/* <p><strong>Response:</strong> {response}</p> */}
         </div>
     );
 };
