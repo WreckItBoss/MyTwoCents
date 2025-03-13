@@ -17,7 +17,6 @@ const LandingPage: React.FC = () => {
         try {
             const { data } = await axios.post("http://127.0.0.1:8000/process-text", { text: userInput });
             setResponse(data.processed_text);
-            //navigate("/contentpage", {state: {response:data.processed_text}});
             const agent1Response = await sendAgent1();
             const agent2Response = await sendAgent2();
             navigate("/contentpage", {state: {response:data.processed_text, responseAgent1: agent1Response, responseAgent2: agent2Response}});
@@ -70,11 +69,6 @@ const LandingPage: React.FC = () => {
 
                 <button onClick={() => setIsOpen(true)} className="button">PopUp</button>
             </div>
-            {/* <Modals isOpen={isOpen} onClose={() => setIsOpen(false)}>
-                <Chat responseAgent1={responseAgent1} responseAgent2={responseAgent2} />
-            </Modals> */}
-
-            {/* <p><strong>Response:</strong> {response}</p> */}
         </div>
     );
 };
