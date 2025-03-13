@@ -1,0 +1,17 @@
+.chatCardPro { 
+    background-color: aqua;
+    font-size: 12px;
+    border-radius: 10px;
+    padding: 10px;
+    color: black;
+    display: inline-block;
+}
+
+.chatCardAgainst {
+    background-color: red;
+    font-size: 12px;
+    border-radius: 10px;
+    padding: 10px;
+    color: white;
+    display: inline-block;
+}

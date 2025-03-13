@@ -21,7 +21,7 @@ class OpenAIService:
                 model=self.model,
                 messages=[
                     {"role": "system", "content": f"You're stance is supportive about the topic {prompt}."},
-                    {"role": "user", "content": f"Generate me your opinion about {prompt}"},
+                    {"role": "user", "content": f"Express a viewpoint that agrees with the topic: {prompt}"},
 
                 ],
                 max_tokens=max_tokens,
@@ -39,7 +39,7 @@ class OpenAIService:
                 model=self.model,
                 messages=[
                     {"role": "system", "content": f"You're stance is against about the topic {prompt}."},
-                    {"role": "user", "content": f"Generate me your opinion about {prompt}"},
+                    {"role": "user", "content": f"Express a viewpoint that disagrees with the topic: {prompt}"},
 
                 ],
                 max_tokens=max_tokens,

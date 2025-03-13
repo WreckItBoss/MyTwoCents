@@ -14,14 +14,12 @@ const Chat: React.FC<ChatProps> = ({ responseAgent1, responseAgent2 }) => {
         <div>
             <h2>Chatbot Responses</h2>
             <div className="chat-box">
-                <p><strong>Agent 1:</strong> {responseAgent1}</p>
-                <p><strong>Agent 2:</strong> {responseAgent2}</p>
+                <p className="chatCardPro"><strong>Agent 1:</strong> {responseAgent1 || "Waiting for response..."}</p>
+                <p className="chatCardAgainst"><strong>Agent 2:</strong> {responseAgent2 || "Waiting for response..."}</p>
             </div>
         </div>
 
     );
-    console.log("This is responseAgent1", responseAgent1);
-    console.log("This is responseAgent2", responseAgent2);
 };
 
 export default Chat;
