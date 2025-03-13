@@ -40,15 +40,18 @@
 
 /* Input container */
 .input-container {
-    position: relative;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    background-color: #D9D9D9; /* Light gray input background */
+    justify-content: space-between; /* Ensures button is pushed to the right */
+    background-color: #D9D9D9;
     border-radius: 12px;
-    padding: 8px 16px;
-    width: 100%;
+    padding: 10px;
+    width: 100%; 
+    max-width: 500px; /* Limits the width for better alignment */
+    box-sizing: border-box; /* Ensures padding doesn’t affect width */
+    margin: 0 auto; /* Centers horizontally */
 }
+
 
 /* Input field */
 .input-container input {
