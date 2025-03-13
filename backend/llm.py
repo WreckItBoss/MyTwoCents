@@ -51,12 +51,12 @@ class OpenAIService:
             return f"Error: {str(e)}"
     
     #Just creating a text about the subject
-    def generate_text(self, prompt: str, max_tokens: Optional[int] = 150) -> str:
+    def generate_text(self, prompt: str, max_tokens: Optional[int] = 512) -> str:
         try:
             response = self.client.chat.completions.create( 
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": "You are a writer."},
+                    {"role": "system", "content": "You are a writer. Write it in a paragraph format within 200 words"},
                     {"role": "user", "content": f"Generate me text about {prompt}"},
 
                 ],

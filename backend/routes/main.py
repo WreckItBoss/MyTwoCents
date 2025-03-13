@@ -34,19 +34,16 @@ def generate_text(input_data: TextInput):
 @app.post("/process-text")
 def process_text(input_data: TextInput):
     generated_text = openai_service.generate_text(input_data.text)
-   #process_text = f"Recieved: {input_data.text}"
     return {"processed_text": generated_text}
 
 #Send post req to agent1
 @app.post("/agent1")
 def text_agent1(input_data: TextInput):
     text_agent1 = openai_service.agent1(input_data.text)
-   #process_text = f"Recieved: {input_data.text}"
     return {"processed_text": text_agent1}
 
 #Send post req to agent2
 @app.post("/agent2")
 def text_agent2(input_data: TextInput):
     text_agent2 = openai_service.agent2(input_data.text)
-   #process_text = f"Recieved: {input_data.text}"
     return {"processed_text": text_agent2}
