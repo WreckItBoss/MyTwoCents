@@ -3,8 +3,10 @@ import axios from "axios";
 import "./LandingPage.css";
 import Modals from "../assets/Modals/modals";
 import Chat from "../ChatBox/Chat";
+import { useNavigate } from "react-router-dom";
 
 const LandingPage: React.FC = () => {
+    const navigate = useNavigate()
     const [userInput, setUserInput] = useState<string>("");
     const [isOpen, setIsOpen] = useState(false);
     const [response, setResponse] = useState<string>("");
@@ -15,6 +17,7 @@ const LandingPage: React.FC = () => {
         try {
             const { data } = await axios.post("http://127.0.0.1:8000/process-text", { text: userInput });
             setResponse(data.processed_text);
+            navigate("/contentpage");
         } catch (error) {
             console.error("Error sending data:", error);
         }
