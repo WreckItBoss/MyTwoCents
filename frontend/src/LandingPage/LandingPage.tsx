@@ -47,18 +47,22 @@ const LandingPage: React.FC = () => {
     }, [responseAgent2]);
 
     return (
-        <div>
-            <textarea
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder="What do you want to know...."
-                rows={5}
-                cols={40}
-                style={{ resize: "none", padding: "10px", fontSize: "16px" }}
-            />
-            <button onClick={async () => { await handleSubmit(); await sendAgent1(); await sendAgent2(); }} className="button">Click here</button>
-            <button onClick={() => setIsOpen(true)} className="button">PopUp</button>
+        <div className="landing-page-container">
+            <div className="card">
+                <h2>What do you want to know?</h2>
 
+                <div className="input-container">
+                    <input
+                        type="text"
+                        value={userInput}
+                        onChange={(e) => setUserInput(e.target.value)}
+                        placeholder="Write something here"
+                    />
+                    <button onClick={async () => { await handleSubmit(); await sendAgent1(); await sendAgent2(); }} className="up-arrow-button">↑</button> {/* Up arrow button */}
+                </div>
+
+                <button onClick={() => setIsOpen(true)} className="button">PopUp</button>
+            </div>
             <Modals isOpen={isOpen} onClose={() => setIsOpen(false)}>
                 <p>Hello</p>
                 <Chat responseAgent1={responseAgent1} responseAgent2={responseAgent2} />

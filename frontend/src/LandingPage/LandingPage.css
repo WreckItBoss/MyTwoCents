@@ -1,8 +1,80 @@
-.button{
-    background-color: black;
-    color: white;
-    padding: 10px 15px;
+/* Overall page container */
+.landing-container {
+    display: flex;
+    height: 100vh;
+    background-color: #E5E3E3; /* Light gray background */
+}
+
+/* Sidebar */
+.sidebar {
+    width: 200px;
+    padding: 20px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* Main content centered */
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Card styling */
+.card {
+    background-color: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 500px;
+}
+
+/* Title */
+.card h1 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Input container */
+.input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #D9D9D9; /* Light gray input background */
+    border-radius: 12px;
+    padding: 8px 16px;
+    width: 100%;
+}
+
+/* Input field */
+.input-container input {
     border: none;
-    border-radius: 10px;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    font-size: 16px;
+    padding: 8px;
+}
+
+/* Submit button */
+.submit-button {
+    background: black;
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
     cursor: pointer;
+    transition: background 0.2s ease-in-out;
+}
+
+.submit-button:hover {
+    background: #333; /* Slightly lighter black */
 }
