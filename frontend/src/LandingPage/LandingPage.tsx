@@ -17,7 +17,10 @@ const LandingPage: React.FC = () => {
         try {
             const { data } = await axios.post("http://127.0.0.1:8000/process-text", { text: userInput });
             setResponse(data.processed_text);
-            navigate("/contentpage", {state: {response:data.processed_text}});
+            //navigate("/contentpage", {state: {response:data.processed_text}});
+            const agent1Response = await sendAgent1();
+            const agent2Response = await sendAgent2();
+            navigate("/contentpage", {state: {response:response, responseAgent1: agent1Response, responseAgent2: agent2Response}});
         } catch (error) {
             console.error("Error sending data:", error);
         }
@@ -40,7 +43,6 @@ const LandingPage: React.FC = () => {
             console.error("Error sending data to Agent2:", error);
         }
     };
-
     useEffect(() => {
         console.log("Updated responseAgent1:", responseAgent1);
     }, [responseAgent1]);
@@ -61,7 +63,7 @@ const LandingPage: React.FC = () => {
                         onChange={(e) => setUserInput(e.target.value)}
                         placeholder="Write something here"
                     />
-                    <button onClick={async () => { await handleSubmit(); await sendAgent1(); await sendAgent2(); }} className="up-arrow-button">↑</button> {/* Up arrow button */}
+                    <button onClick={async () => { await handleSubmit();}} className="up-arrow-button">↑</button> {/* Up arrow button */}
                 </div>
 
                 <button onClick={() => setIsOpen(true)} className="button">PopUp</button>
