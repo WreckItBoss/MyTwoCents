@@ -22,7 +22,6 @@ class OpenAIService:
                 messages=[
                     {"role": "system", "content": f"You're stance is supportive about the topic {prompt}."},
                     {"role": "user", "content": f"Express a viewpoint that agrees with the topic: {prompt}"},
-
                 ],
                 max_tokens=max_tokens,
                 temperature=0.7,
