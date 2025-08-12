@@ -1,3 +1,4 @@
+//Currently Using GEMMA 3
 const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434";
 const MODEL = process.env.LLM_MODEL || "gemma:7b";
 
