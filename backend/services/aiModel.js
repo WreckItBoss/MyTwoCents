@@ -5,7 +5,7 @@ const MODEL = process.env.LLM_MODEL || "gemma:7b";
 async function llmChat({system, messages, temperature = 0.7}) {
     const res = await fetch(`${OLLAMA_URL}/api/chat`,{
         method: 'POST',
-        headers: {'Content Type': 'application/json'},
+        headers: {'Content-Type': 'application/json'},
         body:JSON.stringify({
             model:MODEL,
             messages:[

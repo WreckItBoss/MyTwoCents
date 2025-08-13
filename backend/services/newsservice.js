@@ -4,4 +4,4 @@ async function getNews(id) {
     return News.findById(id).lean()
 }
 
-modules.export = {getNews};
+module.exports = {getNews};
