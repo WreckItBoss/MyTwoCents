@@ -1,0 +1,19 @@
+A news article will be provided. 
+Analyze the news article then generate three key words that are relevant to it.
+Each keyword should be separtated by commas.
+Respond by just providing the keywords.
+An example is shown below.
+
+Example:
+News Article:
+Staying active and fueling your body with the right nutrition go hand in hand when it comes to supporting overall health and sports performance. Regular exercise strengthens the heart, builds muscle, and improves flexibility, while balanced meals rich in whole grains, lean proteins, healthy fats, fruits, and vegetables provide the energy and nutrients needed for recovery and endurance. Hydration is just as important — even mild dehydration can reduce focus and physical output. Whether you’re training for a competition or simply maintaining an active lifestyle, combining consistent physical activity with mindful eating helps optimize performance, boost immunity, and promote long-term well-being.
+
+Keywords:
+Nutrition, Health, Sports
+
+Provide the keywords that are relevant to the article.
+
+News Article:
+{News Article}
+
+Keywords:

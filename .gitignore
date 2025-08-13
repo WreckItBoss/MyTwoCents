@@ -16,3 +16,5 @@ build/
 
 client/node_modules/
 client/.env
+
+backend/scripts/
