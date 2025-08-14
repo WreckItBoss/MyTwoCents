@@ -6,10 +6,18 @@ const { llmChat } = require("./aiModel");
 const mongoose = require('mongoose');
 const { getNews } = require('./newsservice');
 
+function preview(s, n = 160) {
+  if (!s) return "(empty)";
+  const str = String(s);
+  return str.length <= n ? str : str.slice(0, n) + "...";
+}
 async function extractKeywords(text) {
-    const promptPath = path.resolve(__dirname, "../prompts/keywordExtract.txt");
+    const promptPath = path.resolve(__dirname, "./prompts/keywordExtract.txt");
     const template = await fs.readFile(promptPath, "utf8");
     promptText = template.replace(/\{News Article\}/g, text);
+    console.log("\n[extractKeywords] text.len:", text.length, "preview=", preview(text));
+    console.log("[extractKeywords] prompt.len:", promptText.length, "preview=", preview(promptText));
+
     const raw = await llmChat({
         messages: [{ role: 'user', content: promptText }],
     });
