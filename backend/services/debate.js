@@ -1,7 +1,7 @@
 const {extractKeywords} = require("./keywordExtractor.js");
 const {llmChat} = require("./aiModel.js");
 const {getNews} = require("./newsservice.js");
-
+const DebateSession = require("../models/DebateSession.js")
 const AGENT_TEMPLATE = (keyword) =>
   `You are a ${keyword} specialist. Debate the article using domain knowledge.
 - Make specific, checkable claims when possible.
@@ -71,8 +71,34 @@ async function generateDebateByArticleID(articleId, opts = {}) {
         e.status = 404;
         throw e;
     }
+    const { maxAgents = 3, numRounds = 1, temperature = 0.7 } = opts;
     const context = article.content_original || article.content || article.title || "";
     const result = await generateDebateFromText(context, opts);
-    return { articleId, ...result };
+    const sessionDoc = await DebateSession.create({
+      articleId: article._id,
+      topics: result.topics,
+      agents: result.agents,
+      messages: result.messages.map((m,i)=>({
+        speaker: m.speaker,
+        text: m.text,
+        round: Math.floor(i/maxAgents),
+        agentIndex: i % maxAgents,
+        ts: m.ts || new Date()
+      })),
+      params: {
+        model: process.env.LLM_MODEL,
+        temperature,
+        maxAgents,
+        numRounds
+      },
+    })
+    return {
+      sessionId: sessionDoc._id.toString(),
+      articleId: article._id.toString(),
+      topics: result.topics,
+      agents: result.agents,
+      messages: result.messages,
+      createdAt: sessionDoc.createdAt
+    };
 }
 module.exports = {generateDebateFromText, generateDebateByArticleID,};
