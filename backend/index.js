@@ -16,6 +16,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+app.use(cors({ origin: ['http://localhost:5173'] })); // Vite default port
 app.use("/api/news", newsRoutes);
 app.use("/api/debates", debateRoutes);
 app.use("/api/sessions", sessionRoutes);
