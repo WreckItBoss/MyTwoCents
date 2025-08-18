@@ -15,8 +15,8 @@ const MONGO_URL = process.env.MONGO_URL;
 const app = express();
 
 app.use(express.json());
-app.use(cors());
-app.use(cors({ origin: ['http://localhost:5173'] })); // Vite default port
+app.use(cors({ origin: ["http://localhost:5173"] })); // Vite default
+
 app.use("/api/news", newsRoutes);
 app.use("/api/debates", debateRoutes);
 app.use("/api/sessions", sessionRoutes);
