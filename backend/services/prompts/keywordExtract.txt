@@ -1,8 +1,13 @@
-A news article will be provided. 
-Analyze the news article then generate three key words that are relevant to it.
-Each keyword should be separtated by commas.
-Respond by just providing the keywords.
-An example is shown below.
+A news article will be provided.  
+Analyze the news article and generate three high-quality keywords that are:
+
+- Relevant to the main themes or issues discussed  
+- Specific enough to help categorize or summarize the article  
+- Insightful enough to aid in forming an expert opinion  
+
+Avoid generic terms (e.g., "2020", "today") unless they are central to the article.  
+Each keyword should be separated by commas.  
+Respond only with the keywords, nothing else.
 
 Example:
 News Article:
@@ -11,7 +16,7 @@ Staying active and fueling your body with the right nutrition go hand in hand wh
 Keywords:
 Nutrition, Health, Sports
 
-Provide the keywords that are relevant to the article.
+Now analyze the following article and provide keywords.
 
 News Article:
 {News Article}
