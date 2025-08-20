@@ -43,6 +43,10 @@ export function listNews({limit = 20} = {}){
     return http(`/api/news?${qs.toString()}`);
 }
 
+export function getArticle(articleId){
+  return http(`/api/news/${articleId}`);
+}
+
 export function generateDebate({articleId, numRounds = 1, teamSize = 3}){
     return http(`/api/debates/generate`,{
         method: "POST",
