@@ -9,6 +9,7 @@ export default function Debate() {
 
   // UI state
   const [rounds, setRounds] = useState(1);
+  const teamSize = 3;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [data, setData] = useState(null); // { topics, agents, messages }
@@ -18,7 +19,7 @@ export default function Debate() {
       setLoading(true);
       setError("");
       setData(null);
-      const res = await generateDebate({ articleId, numRounds: rounds, maxAgents: 3 });
+      const res = await generateDebate({ articleId, numRounds: rounds, teamSize });
       setData(res);
     } catch (e) {
       setError(e.message);
@@ -54,6 +55,9 @@ export default function Debate() {
         >
           {loading ? "Generating…" : "Generate"}
         </button>
+        <span style = {{marginLeft: 8, fontsize: 12, color: "#666"}}>
+          Teams: {teamSize} vs {teamSize}
+        </span>
       </div>
 
       {/* Loading / error / empty states */}

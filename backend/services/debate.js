@@ -4,15 +4,19 @@ const { getNews } = require("./newsservice.js");
 const DebateSession = require("../models/DebateSession.js");
 
 // System prompt template for an agent, derived from its basis/keyword.
-const AGENT_TEMPLATE = (keyword) =>
-  `You are a ${keyword} specialist. Debate the article using domain knowledge.
-- Make specific, checkable claims when possible.
-- Acknowledge trade-offs and uncertainty.
-- Be concise (<=120 words). Avoid absolutist language.
-- Professional, evidence-seeking tone.`;
+const AGENT_TEMPLATE = (keyword, side) =>
+`You are a specialist in ${keyword}, representing a ${side === "left" ? "left-leaning (progressive)" : "right-leaning (conservative)"} viewpoint in a structured debate.
+
+Your response should:
+- Present clear, fact-based arguments using specific and verifiable claims.
+- Maintain a professional, analytical tone — prioritize evidence over emotion.
+- Acknowledge valid counterpoints, trade-offs, or uncertainty where relevant.
+- Use plain, concise language (≤ 120 words).
+- Avoid absolutist or overly generalized statements.`.trim();
 
 // ✅ fix: actually return the string
-const nameFor = (k) => `${k[0].toUpperCase()}${k.slice(1)} Specialist`;
+const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const nameFor = (k, side) => `${cap(k)} Specialist (${side})`;
 
 function preview(s, n = 160) {
   if (!s) return "(empty)";
@@ -35,25 +39,25 @@ function recentHistory(history, limitChars = 1200) {
 
 // One agent speaks, given the article context and prior turns.
 async function agentTurn({ agent, context, history }) {
-  const system = AGENT_TEMPLATE(agent.basis); // ✅ derive system from basis (don’t store prompt)
+  const system = AGENT_TEMPLATE(agent.basis, agent.side);
   const digest = recentHistory(history, 1200);
 
   const userContent =
 `Article context (truncated):
 ${(context || "").slice(0, 1000)}
 
-Your role: ${agent.name} (${agent.basis})
+Your role: ${agent.name} — ${agent.side.toUpperCase()} Team (${agent.basis})
 
-Instructions:
-- Respond to the article AND the latest points from other agents (below).
-- Quote/paraphrase specific claims you agree/disagree with.
-- Be concise (<=120 words). Professional, evidence-seeking tone.
-- If you revise your stance due to others, say why.
+Debate Instructions:
+- Engage directly with the article and the most recent arguments from other agents (see below).
+- Reference specific claims (quote or paraphrase) you agree or disagree with.
+- Keep your response concise (≤120 words), using a professional, evidence-based tone.
+- If your opinion changes based on others’ points, clearly explain why.
 
 Previous turns:
 ${digest || "(none yet)"}`;
 
-  console.log("\n[agentTurn] agent:", agent.name);
+  console.log("\n[agentTurn] agent:", agent.name, `[${agent.side}]`);
   console.log("[agentTurn] system.len:", system.length);
   console.log("[agentTurn] user.len:", userContent.length, "preview=", preview(userContent));
 
@@ -63,28 +67,36 @@ ${digest || "(none yet)"}`;
     temperature: 0.7,
   });
 
-  return { speaker: agent.name, text: (reply || "").trim(), ts: new Date() };
+  return { speaker: agent.name, text: (reply || "").trim(), side: agent.side, ts: new Date() };
 }
 
 // Create a debate from raw text (used by both text and article flows).
-async function generateDebateFromText(text, { maxAgents = 3, numRounds = 1 } = {}) {
-  // 1) Extract topics → build agents
+async function generateDebateFromText(text, { teamSize = 3, numRounds = 1 } = {}) {
+  // 1) Extract topics → build teams
   const topics = await extractKeywords(text);
-  const agents = topics.slice(0, maxAgents).map((k) => ({
-    name: nameFor(k),
-    basis: k,
-    // no 'prompt' field stored
-  }));
+  const base = topics.slice(0, teamSize);
 
-  // 2) Round-robin: every round, each agent speaks once; history grows each turn
+  const leftTeam = base.map((k)=>({name: nameFor(k, "left"), basis: k, side: "left"}));
+  const rightTeam = base.map((k)=>({name: nameFor(k, "right"), basis: k, side: "right"}));
+  const agents = [...leftTeam, ...rightTeam];
+
   const history = [];
   const turns = [];
 
-  for (let round = 0; round < numRounds; round++) {
-    for (let agentIndex = 0; agentIndex < agents.length; agentIndex++) {
-      const agent = agents[agentIndex];
-      const turn = await agentTurn({ agent, context: text, history });
-      const fullTurn = { ...turn, round, agentIndex };
+  for (let round = 0; round < numRounds; round++){
+    //Left side goes first
+    for(let agent of leftTeam){
+      const agentIndex = agents.findIndex(a=>a.name === agent.name);
+      const turn = await agentTurn({agent, context: text, history});
+      const fullTurn = {...turn, round, agentIndex};
+      history.push(fullTurn);
+      turns.push(fullTurn);
+    }
+
+    for(let agent of rightTeam){
+      const agentIndex = agents.findIndex(a=>a.name === agent.name);
+      const turn = await agentTurn({agent, context: text, history});
+      const fullTurn = {...turn, round, agentIndex};
       history.push(fullTurn);
       turns.push(fullTurn);
     }
@@ -103,12 +115,12 @@ async function generateDebateByArticleID(articleId, opts = {}) {
   }
 
   // Ensure sane defaults here too (route should also sanitize)
-  let { maxAgents = 3, numRounds = 1, temperature = 0.7 } = opts;
-  maxAgents = Math.max(1, Math.min(Number(maxAgents) || 3, 5));
+  let { numRounds = 1, temperature = 0.7, teamSize = 3 } = opts;
   numRounds = [1, 3, 5].includes(Number(numRounds)) ? Number(numRounds) : 1;
+  teanSize = Math.max(1, Math.min(1, Number(teamSize)||3, 5)); // added this in case I want to expand the team size later. Allows up to 5 per side
 
   const context = article.content_original || article.content || article.title || "";
-  const result = await generateDebateFromText(context, { maxAgents, numRounds });
+  const result = await generateDebateFromText(context, { teamSize, numRounds });
 
   // Save a session (no prompts stored)
   const sessionDoc = await DebateSession.create({
@@ -120,13 +132,14 @@ async function generateDebateByArticleID(articleId, opts = {}) {
       text: m.text,
       round: m.round,
       agentIndex: m.agentIndex,
+      side: m.side,
       ts: m.ts || new Date(),
     })),
     params: {
       model: process.env.LLM_MODEL,
       temperature,
-      maxAgents,
       numRounds,
+      teamSize,
     },
   });
 

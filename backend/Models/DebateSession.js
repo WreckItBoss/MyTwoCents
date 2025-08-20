@@ -4,6 +4,7 @@ const {Schema} = mongoose;
 const AgentSchema = new Schema({
     name: String,
     basis: String,
+    side: {type: String, enum: ["left", "right"], required: true},
 },{_id: false});
 
 const MessageSchema = new Schema({
@@ -11,6 +12,7 @@ const MessageSchema = new Schema({
     text: String,
     round: Number,
     agentIndex: Number, //index agents to Number for quick mapping
+    side: {type: String, enum:["left", "right"]},
     ts: {type: Date, default: Date.now}},
     {_id: false}
 );
