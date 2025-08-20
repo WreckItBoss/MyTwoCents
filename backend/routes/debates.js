@@ -3,9 +3,12 @@ const {generateDebateFromText, generateDebateByArticleID} = require("../services
 // POST /api/debates/generate  { articleId, numRounds?, maxAgents? }
 router.post("/generate", async(req,res) => {
     try{
-        const {articleId, numRounds = 1, maxAgents = 3} = req.body;
+        let {articleId, numRounds = 1, maxAgents = 3} = req.body;
         if (!articleId) return res.status(400).json({ error: "missing_articleId" });
-
+        const allowedRounds = [1, 3, 5];
+        numRounds = Number(numRounds);
+        if (!allowedRounds.includes(numRounds)) numRounds = 1;
+        maxAgents = Math.max(1, Math.min(Number(maxAgents) || 3, 5));
         const result = await generateDebateByArticleID(articleId, {numRounds, maxAgents});
         res.json(result);
     }catch(err){
@@ -16,9 +19,12 @@ router.post("/generate", async(req,res) => {
 //POST /api/debates/generateFromText  { text, numRounds?, maxAgents? }
 router.post("/generateFromText", async (req, res) => {
   try {
-    const { text, numRounds = 1, maxAgents = 3 } = req.body;
+    let { text, numRounds = 1, maxAgents = 3 } = req.body;
     if (!text) return res.status(400).json({ error: "missing_text" });
-
+    const allowedRounds = [1, 3, 5];
+    numRounds = Number(numRounds);
+    if (!allowedRounds.includes(numRounds)) numRounds = 1;
+    maxAgents = Math.max(1, Math.min(Number(maxAgents) || 3, 5));
     const result = await generateDebateFromText(text, { numRounds, maxAgents });
     res.json(result);
   } catch (err) {
