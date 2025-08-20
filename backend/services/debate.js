@@ -1,4 +1,5 @@
 const { extractKeywords } = require("./keywordExtractor.js");
+const { generalizeTopics } = require("./keywordToAgent");
 const { llmChat } = require("./aiModel.js");
 const { getNews } = require("./newsservice.js");
 const DebateSession = require("../models/DebateSession.js");
@@ -74,7 +75,28 @@ ${digest || "(none yet)"}`;
 async function generateDebateFromText(text, { teamSize = 3, numRounds = 1 } = {}) {
   // 1) Extract topics → build teams
   const topics = await extractKeywords(text);
-  const base = topics.slice(0, teamSize);
+  const generalized = await generalizeTopics(text, topics);
+
+  // Here we check for dupes. So if we have two US Politics Specialist, it will just create one US Politics Specialist
+  const seen = new Set();
+  const uniqueDomains = [];
+
+  for (const d of generalized){
+    const key = (d || "").trim().toLowerCase();
+    if (!key) continue;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    uniqueDomains.push(d.trim());
+  }
+
+  //Clamp team size to unique count
+
+  const effectiveTeamSize = Math.max(1, Math.min(teamSize, uniqueDomains.length));
+  if (effectiveTeamSize !== teamSize){
+    console.log(`[debate] Adjusting teamSize from ${teamSize} → ${effectiveTeamSize} due to duplicate domains`);
+  }
+
+  const base = uniqueDomains.slice(0, effectiveTeamSize);
 
   const leftTeam = base.map((k)=>({name: nameFor(k, "left"), basis: k, side: "left"}));
   const rightTeam = base.map((k)=>({name: nameFor(k, "right"), basis: k, side: "right"}));
@@ -102,7 +124,7 @@ async function generateDebateFromText(text, { teamSize = 3, numRounds = 1 } = {}
     }
   }
 
-  return { topics, agents, messages: turns };
+  return { topics: uniqueDomains, agents, messages: turns };
 }
 
 // Wrapper: fetch article, then delegate to generateDebateFromText; save a session.
@@ -117,7 +139,7 @@ async function generateDebateByArticleID(articleId, opts = {}) {
   // Ensure sane defaults here too (route should also sanitize)
   let { numRounds = 1, temperature = 0.7, teamSize = 3 } = opts;
   numRounds = [1, 3, 5].includes(Number(numRounds)) ? Number(numRounds) : 1;
-  teanSize = Math.max(1, Math.min(1, Number(teamSize)||3, 5)); // added this in case I want to expand the team size later. Allows up to 5 per side
+  teamSize = Math.max(1, Math.min(Number(teamSize) || 3, 5)); // added this in case I want to expand the team size later. Allows up to 5 per side
 
   const context = article.content_original || article.content || article.title || "";
   const result = await generateDebateFromText(context, { teamSize, numRounds });

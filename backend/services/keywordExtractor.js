@@ -14,7 +14,7 @@ function preview(s, n = 160) {
 async function extractKeywords(text) {
     const promptPath = path.resolve(__dirname, "./prompts/keywordExtract.txt");
     const template = await fs.readFile(promptPath, "utf8");
-    promptText = template.replace(/\{News Article\}/g, text);
+    const promptText = template.replace(/\{News Article\}/g, text);
     console.log("\n[extractKeywords] text.len:", text.length, "preview=", preview(text));
     console.log("[extractKeywords] prompt.len:", promptText.length, "preview=", preview(promptText));
 
