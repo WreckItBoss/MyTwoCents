@@ -29,6 +29,7 @@ export default function Articles(){
 
     return(
         <div>
+            <h1>MyTwoCents</h1>
             <h2 style={{ margin: "8px 0 16px" }}>Latest Articles</h2>
             {articles.map((a) => (
                 <ArticleCard 

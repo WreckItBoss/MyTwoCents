@@ -1,0 +1,40 @@
+/* Navigator.css */
+
+/* full-bleed bar */
+.nav-bleed {
+  background: #1e293b;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  /* full viewport width without white gutters */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+
+/* centered content row INSIDE the full-bleed bar */
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;      /* center brand; or space-between for more links */
+  padding: 12px 20px;
+  box-sizing: border-box;
+
+  /* keep the row from getting too wide if you want */
+  max-width: 1200px;            /* tweak or remove */
+  margin: 0 auto;
+  width: 100%;
+}
+
+.nav-brand {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+
+/* (Ensure the global CSS has body margin reset) */
+/* body { margin: 0; } */
