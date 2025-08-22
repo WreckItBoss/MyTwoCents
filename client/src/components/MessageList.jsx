@@ -10,8 +10,8 @@ export default function MessageList({ agents = [], messages = [] }) {
         const when = m.ts ? new Date(m.ts).toLocaleTimeString() : "";
 
         const alignSelf = side === "right" ? "end" : "start";
-        const bg = side === "right" ? "#eef6ff" : "#f3f4f6";
-        const border = side === "right" ? "#cfe0ff" : "#e5e7eb";
+        const bg = side === "right" ? "#ed8989ff" : "#80b7f2ff";
+        const border = side === "right" ? "#ed8989ff" : "#80b7f2ff";
 
         return (
           <div
@@ -22,12 +22,13 @@ export default function MessageList({ agents = [], messages = [] }) {
               border: `1px solid ${border}`,
               borderRadius: 10,
               padding: 12,
+              fontSize: 13,
               background: bg,
             }}
           >
-            <div style={{ fontSize: 12, color: "#555", marginBottom: 6 }}>
+            <div style={{ fontSize: 14, color: "white", marginBottom: 6 }}>
               <strong>{who}</strong>{" "}
-              <span style={{ color: "#999" }}>
+              <span style={{ color: "#555" }}>
                 {side.toUpperCase()} {when && `• ${when}`}
               </span>
             </div>

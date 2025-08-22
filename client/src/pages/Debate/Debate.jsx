@@ -90,7 +90,7 @@ export default function Debate() {
                   {article.date ? new Date(article.date).toLocaleDateString() : ""}
                 </div>
                 <div style={{ whiteSpace: "pre-wrap", marginTop: 12, lineHeight: 1.6 }}>
-                  {article.content_original || article.content || "(No content)"}
+                    {article.content_original || article.content || "(No content)"}
                 </div>
               </>
             )}
