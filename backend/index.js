@@ -15,7 +15,7 @@ const MONGO_URL = process.env.MONGO_URL;
 const app = express();
 
 app.use(express.json());
-app.use(cors({ origin: ["http://localhost:5173"] })); // Vite default
+app.use(cors({ origin: ["http://localhost:5173", "https://my-two-cents.vercel.app"] })); // Vite default
 
 app.use("/api/news", newsRoutes);
 app.use("/api/debates", debateRoutes);
