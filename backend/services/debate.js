@@ -2,7 +2,7 @@ const { extractKeywords } = require("./keywordExtractor.js");
 const { generalizeTopics } = require("./keywordToAgent");
 const { llmChat } = require("./aiModel.js");
 const { getNews } = require("./newsservice.js");
-const DebateSession = require("../models/DebateSession.js");
+const DebateSession = require("../Models/DebateSession.js");
 
 // System prompt template for an agent, derived from its basis/keyword.
 const AGENT_TEMPLATE = (domain, side, name) => `

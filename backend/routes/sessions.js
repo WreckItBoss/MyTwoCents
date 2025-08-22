@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const mongoose = require("mongoose");
-const DebateSession = require("../models/DebateSession.js");
+const DebateSession = require("../Models/DebateSession.js");
 
 // GET /api/sessions/:id — get one session
 router.get("/:id", async(req, res) =>{

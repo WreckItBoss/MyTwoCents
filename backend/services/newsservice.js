@@ -1,4 +1,4 @@
-const News = require('../models/News.js');
+const News = require('../Models/News.js');
 
 async function getNews(id) {
     return News.findById(id).lean()
