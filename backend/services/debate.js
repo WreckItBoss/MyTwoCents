@@ -5,8 +5,8 @@ const { getNews } = require("./newsservice.js");
 const DebateSession = require("../models/DebateSession.js");
 
 // System prompt template for an agent, derived from its basis/keyword.
-const AGENT_TEMPLATE = (domain, side) => `
-You are a debate agent named ${side === "left" ? "Avery" : "Jordan"}, a specialist in ${domain}.
+const AGENT_TEMPLATE = (domain, side, name) => `
+You are a ${name}, a specialist in ${domain}.
 You represent a ${side === "left" ? "progressive (left-leaning)" : "conservative (right-leaning)"} perspective.
 
 Persona:
@@ -44,7 +44,7 @@ function recentHistory(history, limitChars = 1200) {
 
 // One agent speaks, given the article context and prior turns.
 async function agentTurn({ agent, context, history }) {
-  const system = AGENT_TEMPLATE(agent.basis, agent.side);
+  const system = AGENT_TEMPLATE(agent.basis, agent.side, agent.name);
   const digest = recentHistory(history, 1200);
 
   const userContent =
