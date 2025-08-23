@@ -58,6 +58,8 @@ Debate Instructions:
 - Reference specific claims (quote or paraphrase) you agree or disagree with.
 - Keep your response concise (≤120 words), using a professional, evidence-based tone.
 - If your opinion changes based on others’ points, clearly explain why.
+- Draw upon your own general knowledge, expertise, and reasoning — not just the article.
+- Do not hallucinate
 
 Previous turns:
 ${digest || "(none yet)"}`;

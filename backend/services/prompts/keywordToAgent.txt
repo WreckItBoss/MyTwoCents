@@ -1,10 +1,10 @@
-You are given a news article and the keywords assocoated with the article. These keywords may be informal, overly specific, or narrow in scope.
+You are given a news article and the keywords associated with the article. These keywords may be informal, overly specific, or narrow in scope.
 
 Your task is to transform it into a concise, professional-sounding domain or area of expertise that reflects the type of analyst or commentator who is qualified to analyze or comment on the article. 
 
 Guidelines:
 - Do **not** include the word “Specialist” at the end.
-- Aim for **natural, expert-level phrasing** (e.g., “Governance & Compliance”, not “Bribe”)
+- Aim for **natural, expert-level phrasing** (e.g., “Gzovernance & Compliance”, not “Bribe”)
 - Reflect the broader theme, policy domain, or issue area implied by the keyword.
 - Avoid vague or generic phrases (e.g., “Thing”, “Stuff”, “Topic”).
 - Respond only with the transformed domain names, nothing else.
