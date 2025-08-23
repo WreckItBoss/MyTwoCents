@@ -29,24 +29,41 @@ function preview(s, n = 160) {
   return str.length <= n ? str : str.slice(0, n) + "...";
 }
 
+function clip(s = "", n = 300) {
+  const t = String(s).replace(/\s+/g, " ").trim();
+  return t.length <= n ? t : t.slice(0, n - 1) + "…";
+}
+
 // Keep a short digest of previous turns so agents can respond without blowing context.
-function recentHistory(history, limitChars = 1200) {
+function recentHistory(history = [], limitChars = 1400) {
   const lines = [];
   let used = 0;
+
   for (let i = history.length - 1; i >= 0; i--) {
-    const line = `- ${history[i].speaker}: ${history[i].text}`;
+    const h = history[i] || {};
+    const round = typeof h.round === "number" ? `Round ${h.round + 1}` : "";
+    const side = (h.side || "").toUpperCase(); // "LEFT"/"RIGHT" (may be empty for older data)
+    const tag = [round, side].filter(Boolean).join(" , ");
+    const who = h.speaker || "Agent";
+    const text = clip(h.text || "");
+
+    const line = tag ? `${tag} • ${who}: ${text}` : `${who}: ${text}`;
+
     if (used + line.length > limitChars) break;
     lines.push(line);
     used += line.length;
   }
+
   return lines.reverse().join("\n");
 }
 
 // One agent speaks, given the article context and prior turns.
 async function agentTurn({ agent, context, history }) {
   const system = AGENT_TEMPLATE(agent.basis, agent.side, agent.name);
-  const digest = recentHistory(history, 1200);
-
+  const digest = recentHistory(history, 2000);
+  console.log("=================================");
+  console.log(`[HISTORY]: ${digest}`);
+  console.log("=================================");
   const userContent =
 `Article context (truncated):
 ${(context || "").slice(0, 1000)}
@@ -56,8 +73,9 @@ Your role: ${agent.name} — ${agent.side.toUpperCase()} Team (${agent.basis})
 Debate Instructions:
 - Engage directly with the article and the most recent arguments from other agents (see below).
 - Reference specific claims (quote or paraphrase) you agree or disagree with.
-- Keep your response concise (≤120 words), using a professional, evidence-based tone.
+- Keep your response concise (≤40 words), using a professional, evidence-based tone.
 - If your opinion changes based on others’ points, clearly explain why.
+- If you agree with the other person's opinion, state their name and why you agree.
 - Draw upon your own general knowledge, expertise, and reasoning — not just the article.
 - Do not hallucinate
 
