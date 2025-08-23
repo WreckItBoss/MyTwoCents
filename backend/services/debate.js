@@ -29,7 +29,7 @@ function preview(s, n = 160) {
   return str.length <= n ? str : str.slice(0, n) + "...";
 }
 
-function clip(s = "", n = 300) {
+function clip(s = "", n = 400) {
   const t = String(s).replace(/\s+/g, " ").trim();
   return t.length <= n ? t : t.slice(0, n - 1) + "…";
 }
