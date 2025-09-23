@@ -13,7 +13,7 @@ async function main() {
   console.log("✅ Connected");
 
   // Change this to your file or folder:
-  const dataPath = path.resolve(__dirname, "news");
+  const dataPath = path.resolve(__dirname, "japaneseNews");
 
 
   let docs = [];
