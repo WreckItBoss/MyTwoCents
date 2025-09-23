@@ -33,4 +33,6 @@ const DebateSessionSchema = new Schema({
     sessionLabel: String, //just a label that is human-friendly
 },{timestamps: true});
 
-module.exports = mongoose.model('DebateSession', DebateSessionSchema);
+module.exports = mongoose.models.DebateSession
+  ? mongoose.models.DebateSession
+  : mongoose.model("DebateSession", DebateSessionSchema);

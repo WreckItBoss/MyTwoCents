@@ -1,40 +1,50 @@
-const { extractKeywords } = require("./keywordExtractor.js");
-const { generalizeTopics } = require("./keywordToAgent");
-const { llmChat } = require("./aiModel.js");
+const { llmChat } = require("./aiModel.js"); // ensure file name matches (aiModel.js)
 const { getNews } = require("./newsservice.js");
-const DebateSession = require("../models/DebateSession.js");
+const DebateSession = require("../Models/DebateSession.js");
 
-// System prompt template for an agent, derived from its basis/keyword.
-const AGENT_TEMPLATE = (domain, side, name) => `
-You are a ${name}, a specialist in ${domain}.
-You represent a ${side === "left" ? "progressive (left-leaning)" : "conservative (right-leaning)"} perspective.
-
-Persona:
-- You are knowledgeable in ${domain}, drawing on historical examples, policy debates, and real-world data.  
-- Your political lens is ${side === "left" ? "progressive — you value social justice, inclusivity, and reform." 
-                                          : "conservative — you value tradition, stability, and individual responsibility."}  
-- You debate respectfully: critique ideas, not people.  
-- Your goal is to persuade while acknowledging trade-offs and uncertainty.  
-- Speak in a professional, fact-based style, concise (≤120 words).  
+/** ---------- Personas ---------- **/
+const SUPPORT_TEMPLATE = `
+You are the Supporting Analyst.
+Your task: read the article and ARGUE IN SUPPORT of its central claim or implication.
+- Be professional and evidence-based.
+- Engage the opponent's points directly if present.
+- Acknowledge trade-offs briefly, but defend the article's core position.
+- Keep each turn concise (≤80 words).
 `.trim();
 
+const OPPOSE_TEMPLATE = `
+You are the Opposing Analyst.
+Your task: read the article and ARGUE AGAINST its central claim or implication.
+- Be professional and evidence-based.
+- Engage the opponent's points directly if present.
+- Acknowledge trade-offs briefly, but critique the article's core position.
+- Keep each turn concise (≤80 words).
+`.trim();
 
-// ✅ fix: actually return the string
-const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-const nameFor = (k, side) => `${cap(k)} Specialist (${side})`;
-
+/** ---------- Helpers ---------- **/
 function preview(s, n = 160) {
   if (!s) return "(empty)";
   const str = String(s);
   return str.length <= n ? str : str.slice(0, n) + "...";
 }
 
-// Keep a short digest of previous turns so agents can respond without blowing context.
-function recentHistory(history, limitChars = 1200) {
+function clip(s = "", n = 400) {
+  const t = String(s).replace(/\s+/g, " ").trim();
+  return t.length <= n ? t : t.slice(0, n - 1) + "…";
+}
+
+// keep a short digest of previous turns for coherence
+function recentHistory(history = [], limitChars = 1400) {
   const lines = [];
   let used = 0;
   for (let i = history.length - 1; i >= 0; i--) {
-    const line = `- ${history[i].speaker}: ${history[i].text}`;
+    const h = history[i] || {};
+    const round = typeof h.round === "number" ? `Round ${h.round + 1}` : "";
+    const side = (h.side || "").toUpperCase();
+    const tag = [round, side].filter(Boolean).join(" • ");
+    const who = h.speaker || "Agent";
+    const text = clip(h.text || "");
+    const line = tag ? `${tag} — ${who}: ${text}` : `${who}: ${text}`;
     if (used + line.length > limitChars) break;
     lines.push(line);
     used += line.length;
@@ -42,29 +52,27 @@ function recentHistory(history, limitChars = 1200) {
   return lines.reverse().join("\n");
 }
 
-// One agent speaks, given the article context and prior turns.
-async function agentTurn({ agent, context, history }) {
-  const system = AGENT_TEMPLATE(agent.basis, agent.side, agent.name);
-  const digest = recentHistory(history, 1200);
-
+async function agentTurn({ name, side, system, context, history }) {
+  const digest = recentHistory(history, 2000);
   const userContent =
 `Article context (truncated):
-${(context || "").slice(0, 1000)}
+${(context || "").slice(0, 1200)}
 
-Your role: ${agent.name} — ${agent.side.toUpperCase()} Team (${agent.basis})
-
+Your role: ${name} — ${side.toUpperCase()} side
 Debate Instructions:
 - Engage directly with the article and the most recent arguments from other agents (see below).
 - Reference specific claims (quote or paraphrase) you agree or disagree with.
-- Keep your response concise (≤120 words), using a professional, evidence-based tone.
+- Draw upon your own general knowledge, expertise, and reasoning — not just the article.
+- Keep your response concise (≤80 words), using a professional, evidence-based tone.
 - If your opinion changes based on others’ points, clearly explain why.
+- If you agree with the other person's opinion, state their name and why you agree.
+- Do not hallucinate.
 
 Previous turns:
 ${digest || "(none yet)"}`;
 
-  console.log("\n[agentTurn] agent:", agent.name, `[${agent.side}]`);
-  console.log("[agentTurn] system.len:", system.length);
-  console.log("[agentTurn] user.len:", userContent.length, "preview=", preview(userContent));
+  console.log("\n[agentTurn]", name, `[${side}]`);
+  console.log("[system.len]:", system.length, " [user.len]:", userContent.length, " preview=", preview(userContent));
 
   const reply = await llmChat({
     system,
@@ -72,66 +80,64 @@ ${digest || "(none yet)"}`;
     temperature: 0.7,
   });
 
-  return { speaker: agent.name, text: (reply || "").trim(), side: agent.side, ts: new Date() };
+  return {
+    speaker: name,
+    text: (reply || "").trim(),
+    side,
+    ts: new Date(),
+  };
 }
 
-// Create a debate from raw text (used by both text and article flows).
-async function generateDebateFromText(text, { teamSize = 3, numRounds = 1 } = {}) {
-  // 1) Extract topics → build teams
-  const topics = await extractKeywords(text);
-  const generalized = await generalizeTopics(text, topics);
+/** ---------- Core: exactly two agents, multi-round ---------- **/
+async function generateDebateFromText(text, { numRounds = 1 } = {}) {
+  // Two fixed agents
+  const leftAgent = { name: "Supporting Analyst", side: "left", system: SUPPORT_TEMPLATE };
+  const rightAgent = { name: "Opposing Analyst", side: "right", system: OPPOSE_TEMPLATE };
 
-  // Here we check for dupes. So if we have two US Politics Specialist, it will just create one US Politics Specialist
-  const seen = new Set();
-  const uniqueDomains = [];
-
-  for (const d of generalized){
-    const key = (d || "").trim().toLowerCase();
-    if (!key) continue;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    uniqueDomains.push(d.trim());
-  }
-
-  //Clamp team size to unique count
-
-  const effectiveTeamSize = Math.max(1, Math.min(teamSize, uniqueDomains.length));
-  if (effectiveTeamSize !== teamSize){
-    console.log(`[debate] Adjusting teamSize from ${teamSize} → ${effectiveTeamSize} due to duplicate domains`);
-  }
-
-  const base = uniqueDomains.slice(0, effectiveTeamSize);
-
-  const leftTeam = base.map((k)=>({name: nameFor(k, "left"), basis: k, side: "left"}));
-  const rightTeam = base.map((k)=>({name: nameFor(k, "right"), basis: k, side: "right"}));
-  const agents = [...leftTeam, ...rightTeam];
+  const agents = [
+    { name: leftAgent.name, basis: "General", side: "left" },
+    { name: rightAgent.name, basis: "General", side: "right" },
+  ];
 
   const history = [];
   const turns = [];
 
-  for (let round = 0; round < numRounds; round++){
-    //Left side goes first
-    for(let agent of leftTeam){
-      const agentIndex = agents.findIndex(a=>a.name === agent.name);
-      const turn = await agentTurn({agent, context: text, history});
-      const fullTurn = {...turn, round, agentIndex};
-      history.push(fullTurn);
-      turns.push(fullTurn);
+  for (let round = 0; round < numRounds; round++) {
+    // left (support) goes first
+    {
+      const t = await agentTurn({
+        name: leftAgent.name,
+        side: leftAgent.side,
+        system: leftAgent.system,
+        context: text,
+        history,
+      });
+      const full = { ...t, round, agentIndex: 0 };
+      history.push(full);
+      turns.push(full);
     }
-
-    for(let agent of rightTeam){
-      const agentIndex = agents.findIndex(a=>a.name === agent.name);
-      const turn = await agentTurn({agent, context: text, history});
-      const fullTurn = {...turn, round, agentIndex};
-      history.push(fullTurn);
-      turns.push(fullTurn);
+    {
+      const t = await agentTurn({
+        name: rightAgent.name,
+        side: rightAgent.side,
+        system: rightAgent.system,
+        context: text,
+        history,
+      });
+      const full = { ...t, round, agentIndex: 1 };
+      history.push(full);
+      turns.push(full);
     }
   }
 
-  return { topics: uniqueDomains, agents, messages: turns };
+  return {
+    topics: [], // no keyword extraction now
+    agents,
+    messages: turns,
+  };
 }
 
-// Wrapper: fetch article, then delegate to generateDebateFromText; save a session.
+/** ---------- Article wrapper + persistence ---------- **/
 async function generateDebateByArticleID(articleId, opts = {}) {
   const article = await getNews(articleId);
   if (!article) {
@@ -140,33 +146,32 @@ async function generateDebateByArticleID(articleId, opts = {}) {
     throw e;
   }
 
-  // Ensure sane defaults here too (route should also sanitize)
-  let { numRounds = 1, temperature = 0.7, teamSize = 3 } = opts;
+  let { numRounds = 1, temperature = 0.7 } = opts;
   numRounds = [1, 3, 5].includes(Number(numRounds)) ? Number(numRounds) : 1;
-  teamSize = Math.max(1, Math.min(Number(teamSize) || 3, 5)); // added this in case I want to expand the team size later. Allows up to 5 per side
 
   const context = article.content_original || article.content || article.title || "";
-  const result = await generateDebateFromText(context, { teamSize, numRounds });
+  const result = await generateDebateFromText(context, { numRounds });
 
-  // Save a session (no prompts stored)
+  // Save session
   const sessionDoc = await DebateSession.create({
     articleId: article._id,
-    topics: result.topics,
-    agents: result.agents, // { name, basis }
-    messages: result.messages.map((m) => ({
+    topics: [],
+    agents: result.agents, // [{ name, basis, side }]
+    messages: result.messages.map(m => ({
       speaker: m.speaker,
       text: m.text,
       round: m.round,
       agentIndex: m.agentIndex,
-      side: m.side,
+      side: m.side, // "left" | "right"
       ts: m.ts || new Date(),
     })),
     params: {
       model: process.env.LLM_MODEL,
       temperature,
       numRounds,
-      teamSize,
+      teamSize: 1, // not used anymore, but kept for compatibility
     },
+    sessionLabel: "Supporting vs Opposing",
   });
 
   return {
