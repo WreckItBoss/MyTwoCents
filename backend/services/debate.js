@@ -5,20 +5,26 @@ const DebateSession = require("../Models/DebateSession.js");
 /** ---------- Personas ---------- **/
 const SUPPORT_TEMPLATE = `
 You are the Supporting Analyst.
-Your task: read the article and ARGUE IN SUPPORT of its central claim or implication.
+Your task: ARGUE in SUPPORT to the topic of Nuclear Energy.
+- Use information about the news article and your general knowledge
 - Be professional and evidence-based.
 - Engage the opponent's points directly if present.
 - Acknowledge trade-offs briefly, but defend the article's core position.
-- Keep each turn concise (≤80 words).
+- Keep each turn concise (≤120 words).
+- Answer in Japanese
+- です・ます調を使って答えてください
 `.trim();
 
 const OPPOSE_TEMPLATE = `
 You are the Opposing Analyst.
-Your task: read the article and ARGUE AGAINST its central claim or implication.
+Your task: ARGUE AGAINST the topic of Nuclear Energy.
+- Use information about the news article and your general knowledge
 - Be professional and evidence-based.
 - Engage the opponent's points directly if present.
 - Acknowledge trade-offs briefly, but critique the article's core position.
-- Keep each turn concise (≤80 words).
+- Keep each turn concise (≤120 words).
+- Answer in Japanese
+- です・ます調を使って答えてください
 `.trim();
 
 /** ---------- Helpers ---------- **/
@@ -54,16 +60,19 @@ function recentHistory(history = [], limitChars = 1400) {
 
 async function agentTurn({ name, side, system, context, history }) {
   const digest = recentHistory(history, 2000);
+  console.log("RECENT HISTORY==========================")
+  console.log(digest)
+  console.log("==========================")
   const userContent =
 `Article context (truncated):
 ${(context || "").slice(0, 1200)}
 
 Your role: ${name} — ${side.toUpperCase()} side
 Debate Instructions:
-- Engage directly with the article and the most recent arguments from other agents (see below).
-- Reference specific claims (quote or paraphrase) you agree or disagree with.
+- Use information about the news article and your general knowledge
+- Reference specific claims (quote or paraphrase) from the opponent you agree or disagree with.
 - Draw upon your own general knowledge, expertise, and reasoning — not just the article.
-- Keep your response concise (≤80 words), using a professional, evidence-based tone.
+- Keep your response concise (≤120 words), using a professional, evidence-based tone.
 - If your opinion changes based on others’ points, clearly explain why.
 - If you agree with the other person's opinion, state their name and why you agree.
 - Do not hallucinate.
@@ -77,7 +86,7 @@ ${digest || "(none yet)"}`;
   const reply = await llmChat({
     system,
     messages: [{ role: "user", content: userContent }],
-    temperature: 0.7,
+    temperature: 0,
   });
 
   return {
@@ -89,7 +98,7 @@ ${digest || "(none yet)"}`;
 }
 
 /** ---------- Core: exactly two agents, multi-round ---------- **/
-async function generateDebateFromText(text, { numRounds = 1 } = {}) {
+async function generateDebateFromText(text, { numRounds = 1, userPosition = "agree" } = {}) {
   // Two fixed agents
   const leftAgent = { name: "Supporting Analyst", side: "left", system: SUPPORT_TEMPLATE };
   const rightAgent = { name: "Opposing Analyst", side: "right", system: OPPOSE_TEMPLATE };
@@ -102,29 +111,38 @@ async function generateDebateFromText(text, { numRounds = 1 } = {}) {
   const history = [];
   const turns = [];
 
+  // Decide order based on stance
+  
+  const first = userPosition === "agree" ? leftAgent : rightAgent;
+  const second = userPosition === "agree" ? rightAgent : leftAgent;
+  const firstIndex = userPosition === "agree" ? 0 : 1;
+  const secondIndex = userPosition === "agree" ? 1 : 0;
+
   for (let round = 0; round < numRounds; round++) {
-    // left (support) goes first
+    // First agent speaks
     {
       const t = await agentTurn({
-        name: leftAgent.name,
-        side: leftAgent.side,
-        system: leftAgent.system,
+        name: first.name,
+        side: first.side,
+        system: first.system,
         context: text,
         history,
       });
-      const full = { ...t, round, agentIndex: 0 };
+      const full = { ...t, round, agentIndex: firstIndex };
       history.push(full);
       turns.push(full);
     }
+
+    // Second agent responds
     {
       const t = await agentTurn({
-        name: rightAgent.name,
-        side: rightAgent.side,
-        system: rightAgent.system,
+        name: second.name,
+        side: second.side,
+        system: second.system,
         context: text,
         history,
       });
-      const full = { ...t, round, agentIndex: 1 };
+      const full = { ...t, round, agentIndex: secondIndex };
       history.push(full);
       turns.push(full);
     }
@@ -137,6 +155,7 @@ async function generateDebateFromText(text, { numRounds = 1 } = {}) {
   };
 }
 
+
 /** ---------- Article wrapper + persistence ---------- **/
 async function generateDebateByArticleID(articleId, opts = {}) {
   const article = await getNews(articleId);
@@ -146,18 +165,20 @@ async function generateDebateByArticleID(articleId, opts = {}) {
     throw e;
   }
 
-  let { numRounds = 1, temperature = 0.7 } = opts;
+  let { numRounds = 1, temperature = 0, userPosition = "agree" } = opts;
   numRounds = [1, 3, 5].includes(Number(numRounds)) ? Number(numRounds) : 1;
 
-  const context = article.content_original || article.content || article.title || "";
-  const result = await generateDebateFromText(context, { numRounds });
+  const context =
+    article.content_original || article.content || article.title || "";
+
+  const result = await generateDebateFromText(context, { numRounds, userPosition });
 
   // Save session
   const sessionDoc = await DebateSession.create({
     articleId: article._id,
     topics: [],
     agents: result.agents, // [{ name, basis, side }]
-    messages: result.messages.map(m => ({
+    messages: result.messages.map((m) => ({
       speaker: m.speaker,
       text: m.text,
       round: m.round,
@@ -170,6 +191,7 @@ async function generateDebateByArticleID(articleId, opts = {}) {
       temperature,
       numRounds,
       teamSize: 1, // not used anymore, but kept for compatibility
+      userPosition, // record it for session metadata
     },
     sessionLabel: "Supporting vs Opposing",
   });
@@ -183,6 +205,7 @@ async function generateDebateByArticleID(articleId, opts = {}) {
     createdAt: sessionDoc.createdAt,
   };
 }
+
 
 module.exports = {
   generateDebateFromText,
