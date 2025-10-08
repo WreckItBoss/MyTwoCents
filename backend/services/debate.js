@@ -105,8 +105,8 @@ ${digest || "(none yet)"}`;
 /** ---------- Core: exactly two agents, multi-round ---------- **/
 async function generateDebateFromText(text, { numRounds = 1, userPosition = "agree" } = {}) {
   // Two fixed agents
-  const leftAgent = { name: "Supporting Analyst", side: "left", system: SUPPORT_TEMPLATE };
-  const rightAgent = { name: "Opposing Analyst", side: "right", system: OPPOSE_TEMPLATE };
+  const leftAgent = { name: "賛成派", side: "left", system: SUPPORT_TEMPLATE };
+  const rightAgent = { name: "反対派", side: "right", system: OPPOSE_TEMPLATE };
 
   const agents = [
     { name: leftAgent.name, basis: "General", side: "left" },
