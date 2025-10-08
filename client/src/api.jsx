@@ -47,9 +47,9 @@ export function getArticle(articleId){
   return http(`/api/news/${articleId}`);
 }
 
-export function generateDebate({articleId, numRounds = 1, teamSize = 3}){
+export function generateDebate({articleId, numRounds = 1, teamSize = 3, userPosition}){
     return http(`/api/debates/generate`,{
         method: "POST",
-        body: JSON.stringify({articleId, numRounds, teamSize}),
+        body: JSON.stringify({articleId, numRounds, teamSize, userPosition}),
     });
 }
