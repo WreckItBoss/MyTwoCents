@@ -5,7 +5,7 @@ const DebateSession = require("../Models/DebateSession.js");
 /** ---------- Personas ---------- **/
 const SUPPORT_TEMPLATE = `
 You are the Supporting Analyst.
-Your task: ARGUE in SUPPORT to the topic of Nuclear Energy.
+Your task: ARGUE in SUPPORT to the topic of the age of hyper-surveillance.
 - Use information about the news article and your general knowledge
 - Be professional and evidence-based.
 - Engage the opponent's points directly if present.
@@ -17,7 +17,7 @@ Your task: ARGUE in SUPPORT to the topic of Nuclear Energy.
 
 const OPPOSE_TEMPLATE = `
 You are the Opposing Analyst.
-Your task: ARGUE AGAINST the topic of Nuclear Energy.
+Your task: ARGUE AGAINST the topic of the age of hyper-surveillance.
 - Use information about the news article and your general knowledge
 - Be professional and evidence-based.
 - Engage the opponent's points directly if present.
