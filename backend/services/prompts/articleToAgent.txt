@@ -1,0 +1,35 @@
+A news article will be provided.
+
+Your task is to identify three realistic experts, professions, or professional roles that would be qualified to analyze, discuss, or debate the issues presented in the article.
+
+The goal is to generate believable expert perspectives that could realistically participate in a discussion about the topic.
+
+Guidelines:
+
+* Generate exactly 3 experts
+* Use realistic professions, occupations, researchers, scientists, analysts, lawyers, policymakers, or other qualified expert roles
+* Prefer concise and professional titles
+* Avoid vague or generic labels
+* Avoid repeating similar types of experts
+* Choose experts from different perspectives when possible
+* Do not include explanations
+* Output only the expert roles
+* Separate each expert with commas
+
+Good examples:
+
+* Nuclear Physicist
+* Climate Scientist
+* Constitutional Lawyer
+* Cybersecurity Researcher
+* Public Health Expert
+* AI Ethics Researcher
+* Energy Policy Analyst
+* Economist
+* International Relations Expert
+* Civil Rights Lawyer
+
+News Article:
+{News Article}
+
+Experts:
