@@ -31,6 +31,8 @@ Your stance:
 - ${agent.stanceLabel.toUpperCase()} the topic
 
 General requirements:
+- Answer in Japanese
+- Use ですます調
 - Be professional and evidence-based
 - Do not hallucinate
 - Keep the response concise (≤120 words unless otherwise specified)
