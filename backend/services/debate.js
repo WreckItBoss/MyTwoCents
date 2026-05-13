@@ -1,162 +1,352 @@
-const { llmChat } = require("./aiModel.js"); // ensure file name matches (aiModel.js)
+
+const { llmChat } = require("./aiModel.js");
 const { getNews } = require("./newsservice.js");
 const DebateSession = require("../Models/DebateSession.js");
+const { articleToAgents } = require("./articleToAgent.js");
 
-/** ---------- Personas ---------- **/
-const SUPPORT_TEMPLATE = `
-You are the Supporting Analyst.
-Your task: ARGUE in SUPPORT to the topic of the age of hyper-surveillance.
-- Use information about the news article and your general knowledge
-- Be professional and evidence-based.
-- Engage the opponent's points directly if present.
-- Acknowledge trade-offs briefly, but defend the article's core position.
-- Keep each turn concise (≤120 words).
-- Answer in Japanese
-- です・ます調を使って答えてください
-`.trim();
+/** ---------- Agent Definitions ---------- **/
+const SUPPORT_STANCE = {
+  side: "left",
+  stanceSymbol: "+",
+  stanceLabel: "support",
+};
 
-const OPPOSE_TEMPLATE = `
-You are the Opposing Analyst.
-Your task: ARGUE AGAINST the topic of the age of hyper-surveillance.
-- Use information about the news article and your general knowledge
-- Be professional and evidence-based.
-- Engage the opponent's points directly if present.
-- Acknowledge trade-offs briefly, but critique the article's core position.
-- Keep each turn concise (≤120 words).
-- Answer in Japanese
-- です・ます調を使って答えてください
-`.trim();
+const OPPOSE_STANCE = {
+  side: "right",
+  stanceSymbol: "-",
+  stanceLabel: "oppose",
+};
 
-/** ---------- Helpers ---------- **/
-function preview(s, n = 160) {
-  if (!s) return "(empty)";
-  const str = String(s);
-  return str.length <= n ? str : str.slice(0, n) + "...";
+/** ---------- Prompt Templates ---------- **/
+function buildSystemPrompt(agent, topic) {
+  return `
+You are a ${agent.name}.
+You are an expert participating in a structured debate about a news article.
+
+Your expertise:
+- You have professional knowledge and domain understanding as a ${agent.name}
+- You should reason from the perspective of this profession
+
+Your stance:
+- ${agent.stanceLabel.toUpperCase()} the topic
+
+General requirements:
+- Be professional and evidence-based
+- Do not hallucinate
+- Keep the response concise (≤120 words unless otherwise specified)
+- Stay consistent with your assigned stance
+  `.trim();
 }
 
-function clip(s = "", n = 400) {
+/** ---------- Helpers ---------- **/
+function clip(s = "", n = 500) {
   const t = String(s).replace(/\s+/g, " ").trim();
   return t.length <= n ? t : t.slice(0, n - 1) + "…";
 }
 
-// keep a short digest of previous turns for coherence
-function recentHistory(history = [], limitChars = 1400) {
+function recentHistory(history = [], limitChars = 1800) {
   const lines = [];
   let used = 0;
+
   for (let i = history.length - 1; i >= 0; i--) {
     const h = history[i] || {};
     const round = typeof h.round === "number" ? `Round ${h.round + 1}` : "";
     const side = (h.side || "").toUpperCase();
-    const tag = [round, side].filter(Boolean).join(" • ");
     const who = h.speaker || "Agent";
-    const text = clip(h.text || "");
-    const line = tag ? `${tag} — ${who}: ${text}` : `${who}: ${text}`;
+    const text = clip(h.text || "", 300);
+    const line = [round, side, who].filter(Boolean).join(" • ") + `: ${text}`;
+
     if (used + line.length > limitChars) break;
     lines.push(line);
     used += line.length;
   }
+
   return lines.reverse().join("\n");
 }
 
-async function agentTurn({ name, side, system, context, history }) {
-  const digest = recentHistory(history, 2000);
-  console.log("RECENT HISTORY==========================")
-  console.log(digest)
-  console.log("==========================")
-  const userContent =
-`Article context (truncated):
-${(context || "").slice(0, 1200)}
+function inferTopicFromArticle(article = {}) {
+  return (
+    article.topic ||
+    article.title ||
+    "この記事が扱う社会的・政治的トピック"
+  );
+}
 
-Your role: ${name} — ${side.toUpperCase()} side
-Debate Instructions:
-- Use information about the news article and your general knowledge
-- Reference specific claims (quote or paraphrase) from the opponent you agree or disagree with.
-- Draw upon your own general knowledge, expertise, and reasoning — not just the article.
-- Keep your response concise (≤120 words), using a professional, evidence-based tone.
-- If your opinion changes based on others’ points, clearly explain why.
-- If you agree with the other person's opinion, state their name and why you agree.
-- Do not hallucinate.
+/** ---------- Stage 1: Topic Opinion Generation ---------- **/
+async function generateTopicOpinion({ topic, agent }) {
+  const system = buildSystemPrompt(agent);
 
-Previous turns:
-${digest || "(none yet)"}`;
+  const userPrompt = `
+Topic:
+${topic}
 
-  console.log("\n[agentTurn]", name, `[${side}]`);
-  console.log("[system.len]:", system.length, " [user.len]:", userContent.length, " preview=", preview(userContent));
+Assigned stance:
+${agent.stanceLabel}
+
+Task:
+Generate your stance-consistent opinion about the TOPIC itself, based on your internal knowledge.
+
+Requirements:
+- Clearly state your position on the topic
+- Use general knowledge and reasoning
+- Mention 1–2 key arguments supporting your stance
+- Keep it concise (≤100 words)
+  `.trim();
 
   const reply = await llmChat({
     system,
-    messages: [{ role: "user", content: userContent }],
+    messages: [{ role: "user", content: userPrompt }],
     temperature: 0,
   });
 
+  const output = (reply || "").trim();
+  logStage("STAGE 1: Topic Opinion", agent, topic, output);
+
+  return output
+}
+
+
+/** ---------- Stage 2: News Opinion Generation ---------- **/
+async function generateNewsOpinion({ articleText, topic, agent }) {
+  const system = buildSystemPrompt(agent);
+
+  const userPrompt = `
+Topic:
+${topic}
+
+News Article:
+${clip(articleText, 1800)}
+
+Task:
+Generate your stance-consistent opinion about this news article.
+Interpret the article through your assigned stance.
+
+Requirements:
+- Focus on the article content
+- Refer to claims, implications, or framing in the article
+- Stay consistent with your stance on the topic
+- Keep it concise (≤100 words)
+  `.trim();
+
+  const reply = await llmChat({
+    system,
+    messages: [{ role: "user", content: userPrompt }],
+    temperature: 0,
+  });
+
+  const output = (reply || "").trim();
+  logStage("STAGE 2: News Opinion", agent, topic, output);
+
+  return output
+}
+
+/** ---------- Stage 3: Rebuttal Generation ---------- **/
+async function generateRebuttal({
+  topic,
+  articleText,
+  agent,
+  topicOpinion,
+  newsOpinion,
+  history,
+}) {
+  const system = buildSystemPrompt(agent);
+  const digest = recentHistory(history, 1800);
+
+  const userPrompt = `
+Topic:
+${topic}
+
+News Article:
+${clip(articleText, 1200)}
+
+Topic-based opinion:
+${topicOpinion}
+
+Article-based opinion:
+${newsOpinion}
+
+Previous dialogue history:
+${digest || "(none yet)"}
+
+Task:
+Generate your next rebuttal in the debate.
+
+Requirements:
+- Integrate the topic-based opinion and article-based opinion into the response
+- Generate a rebuttal using the dialogue history, directly addressing the opponent’s most recent claim if present
+- Maintain consistency with the assigned stance
+- Minor agreement is allowed, but the overall stance must not change
+- Be concise, professional, and evidence-based
+- Limit the response to ≤120 words
+  `.trim();
+
+  const reply = await llmChat({
+    system,
+    messages: [{ role: "user", content: userPrompt }],
+    temperature: 0,
+  });
+
+  return (reply || "").trim();
+}
+
+/** ---------- Agent Pipeline ---------- **/
+async function initializeAgentState({ topic, articleText, agent }) {
+  const topicOpinion = await generateTopicOpinion({ topic, agent });
+  const newsOpinion = await generateNewsOpinion({ topic, articleText, agent });
+
   return {
-    speaker: name,
-    text: (reply || "").trim(),
-    side,
+    ...agent,
+    basis: "General + Article",
+    topicOpinion,
+    newsOpinion,
+  };
+}
+
+async function runAgentTurn({
+  round,
+  agentIndex,
+  agentState,
+  topic,
+  articleText,
+  history,
+}) {
+  const rebuttal = await generateRebuttal({
+    topic,
+    articleText,
+    agent: agentState,
+    topicOpinion: agentState.topicOpinion,
+    newsOpinion: agentState.newsOpinion,
+    history,
+  });
+
+  return {
+    speaker: agentState.name,
+    text: rebuttal,
+    round,
+    agentIndex,
+    side: agentState.side,
     ts: new Date(),
   };
 }
 
-/** ---------- Core: exactly two agents, multi-round ---------- **/
-async function generateDebateFromText(text, { numRounds = 1, userPosition = "agree" } = {}) {
-  // Two fixed agents
-  const leftAgent = { name: "Supporting Analyst", side: "left", system: SUPPORT_TEMPLATE };
-  const rightAgent = { name: "Opposing Analyst", side: "right", system: OPPOSE_TEMPLATE };
+/** ---------- Core Debate ---------- **/
+async function generateDebateFromText(
+  text,
+  {
+    numRounds = 3,
+    userPosition = "agree",
+    topic = "一般的な社会的トピック",
+    experts = ["Policy Analyst", "Researcher", "Subject Matter Expert"],
+  } = {}
+) {
+  const { supportAgents, opposeAgents, allAgents } =
+    createStanceAgentsFromExperts(experts);
 
-  const agents = [
-    { name: leftAgent.name, basis: "General", side: "left" },
-    { name: rightAgent.name, basis: "General", side: "right" },
-  ];
+  const initializedAgents = [];
+
+  for (const agent of allAgents) {
+    const state = await initializeAgentState({
+      topic,
+      articleText: text,
+      agent,
+    });
+    initializedAgents.push(state);
+  }
+
+  const agents = initializedAgents.map((a) => ({
+    name: a.name,
+    basis: a.basis,
+    side: a.side,
+    topicOpinion: a.topicOpinion,
+    newsOpinion: a.newsOpinion,
+  }));
 
   const history = [];
   const turns = [];
 
-  // Decide order based on stance
-  
-  const first = userPosition === "agree" ? leftAgent : rightAgent;
-  const second = userPosition === "agree" ? rightAgent : leftAgent;
-  const firstIndex = userPosition === "agree" ? 0 : 1;
-  const secondIndex = userPosition === "agree" ? 1 : 0;
+  const supportStates = initializedAgents.filter((a) => a.side === "left");
+  const opposeStates = initializedAgents.filter((a) => a.side === "right");
 
-  for (let round = 0; round < numRounds; round++) {
-    // First agent speaks
-    {
-      const t = await agentTurn({
-        name: first.name,
-        side: first.side,
-        system: first.system,
-        context: text,
+  const firstTeam = userPosition === "agree" ? supportStates : opposeStates;
+  const secondTeam = userPosition === "agree" ? opposeStates : supportStates;
+
+for (let round = 0; round < numRounds; round++) {
+  for (let i = 0; i < supportStates.length; i++) {
+    const supportAgent = supportStates[i];
+    const opposeAgent = opposeStates[i];
+
+    if (userPosition === "agree") {
+      const supportIndex = initializedAgents.indexOf(supportAgent);
+
+      const supportTurn = await runAgentTurn({
+        round,
+        agentIndex: supportIndex,
+        agentState: supportAgent,
+        topic,
+        articleText: text,
         history,
       });
-      const full = { ...t, round, agentIndex: firstIndex };
-      history.push(full);
-      turns.push(full);
-    }
 
-    // Second agent responds
-    {
-      const t = await agentTurn({
-        name: second.name,
-        side: second.side,
-        system: second.system,
-        context: text,
+      history.push(supportTurn);
+      turns.push(supportTurn);
+
+      if (opposeAgent) {
+        const opposeIndex = initializedAgents.indexOf(opposeAgent);
+
+        const opposeTurn = await runAgentTurn({
+          round,
+          agentIndex: opposeIndex,
+          agentState: opposeAgent,
+          topic,
+          articleText: text,
+          history,
+        });
+
+        history.push(opposeTurn);
+        turns.push(opposeTurn);
+      }
+    } else {
+      const opposeIndex = initializedAgents.indexOf(opposeAgent);
+
+      const opposeTurn = await runAgentTurn({
+        round,
+        agentIndex: opposeIndex,
+        agentState: opposeAgent,
+        topic,
+        articleText: text,
         history,
       });
-      const full = { ...t, round, agentIndex: secondIndex };
-      history.push(full);
-      turns.push(full);
+
+      history.push(opposeTurn);
+      turns.push(opposeTurn);
+
+      if (supportAgent) {
+        const supportIndex = initializedAgents.indexOf(supportAgent);
+
+        const supportTurn = await runAgentTurn({
+          round,
+          agentIndex: supportIndex,
+          agentState: supportAgent,
+          topic,
+          articleText: text,
+          history,
+        });
+
+        history.push(supportTurn);
+        turns.push(supportTurn);
+      }
     }
   }
+}
 
   return {
-    topics: [], // no keyword extraction now
+    topics: [topic],
     agents,
     messages: turns,
   };
 }
 
-
-/** ---------- Article wrapper + persistence ---------- **/
+/** ---------- Article Wrapper + Persistence ---------- **/
 async function generateDebateByArticleID(articleId, opts = {}) {
   const article = await getNews(articleId);
   if (!article) {
@@ -168,30 +358,41 @@ async function generateDebateByArticleID(articleId, opts = {}) {
   let { numRounds = 1, temperature = 0, userPosition = "agree" } = opts;
   numRounds = [1, 3, 5].includes(Number(numRounds)) ? Number(numRounds) : 1;
 
+  const topic = inferTopicFromArticle(article);
   const context =
-    article.content_original || article.content || article.title || "";
+    article.content_original ||
+    article.content ||
+    article.title ||
+    "";
+  const experts = await articleToAgents(context, 3);
+  const result = await generateDebateFromText(context, {
+    numRounds,
+    userPosition,
+    topic,
+    experts,
+  });
 
-  const result = await generateDebateFromText(context, { numRounds, userPosition });
-
-  // Save session
   const sessionDoc = await DebateSession.create({
     articleId: article._id,
-    topics: [],
-    agents: result.agents, // [{ name, basis, side }]
+    topics: result.topics,
+    agents: result.agents.map((a) => ({
+      name: a.name,
+      basis: a.basis,
+      side: a.side,
+    })),
     messages: result.messages.map((m) => ({
       speaker: m.speaker,
       text: m.text,
       round: m.round,
       agentIndex: m.agentIndex,
-      side: m.side, // "left" | "right"
+      side: m.side,
       ts: m.ts || new Date(),
     })),
     params: {
       model: process.env.LLM_MODEL,
       temperature,
+      maxAgents: 2,
       numRounds,
-      teamSize: 1, // not used anymore, but kept for compatibility
-      userPosition, // record it for session metadata
     },
     sessionLabel: "Supporting vs Opposing",
   });
@@ -206,9 +407,43 @@ async function generateDebateByArticleID(articleId, opts = {}) {
   };
 }
 
+function logStage(title, agent, topic, content) {
+  console.log(`\n===== ${title} =====`);
+  console.log(`Agent: ${agent.name} (${agent.stanceLabel})`);
+  console.log(`Topic: ${topic}`);
+  console.log("Output:");
+  console.log(content);
+  console.log("=================================\n");
+}
+
+function createStanceAgentsFromExperts(experts = []) {
+  const cleanExperts = experts.filter(Boolean).slice(0, 3);
+
+  const supportAgents = cleanExperts.map((expert) => ({
+    name: expert,
+    basis: expert,
+    ...SUPPORT_STANCE,
+  }));
+
+  const opposeAgents = cleanExperts.map((expert) => ({
+    name: expert,
+    basis: expert,
+    ...OPPOSE_STANCE,
+  }));
+
+  return {
+    supportAgents,
+    opposeAgents,
+    allAgents: [...supportAgents, ...opposeAgents],
+  };
+}
 
 module.exports = {
+  generateTopicOpinion,
+  generateNewsOpinion,
+  generateRebuttal,
   generateDebateFromText,
   generateDebateByArticleID,
   recentHistory,
 };
+
