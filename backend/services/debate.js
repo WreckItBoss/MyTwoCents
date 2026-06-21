@@ -235,7 +235,7 @@ async function runAgentTurn({
 async function generateDebateFromText(
   text,
   {
-    numRounds = 3,
+    numRounds = 1,
     userPosition = "agree",
     topic = "一般的な社会的トピック",
     experts = ["Policy Analyst", "Researcher", "Subject Matter Expert"],
