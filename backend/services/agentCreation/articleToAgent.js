@@ -1,6 +1,6 @@
 const path = require("path");
 const fs = require("fs/promises");
-const { llmChat } = require("./aiModel.js");
+const { llmChat } = require("../aiModel.js");
 
 async function articleToAgents(articleText, count = 3) {
   const promptPath = path.resolve(__dirname, "./prompts/articleToAgent.txt");
