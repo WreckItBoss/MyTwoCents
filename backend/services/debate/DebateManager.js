@@ -1,4 +1,5 @@
 const DebateAgent = require("./DebateAgent");
+const { generatePersona } = require("./personaGenerator/personaGenerator");
 
 class DebateManager {
   constructor({ topic, articleText, roles, numRounds = 3 }) {
@@ -11,29 +12,40 @@ class DebateManager {
     this.debateHistory = [];
   }
 
-  initializeAgents() {
-    for (const role of this.roles.support) {
-      this.agents.push(
-        new DebateAgent({
-          name: role,
-          stance: "support",
-          side: "left",
-          persona: `あなたは${role}です。この記事の主要テーマを支持する立場で議論してください。`,
-        })
-      );
-    }
+    initializeAgents() {
+        for (const role of this.roles.support) {
+            const persona = generatePersona({
+                name: role,
+                topic: this.topic,
+                stance: "support",
+            });
 
-    for (const role of this.roles.oppose) {
-      this.agents.push(
-        new DebateAgent({
-          name: role,
-          stance: "oppose",
-          side: "right",
-          persona: `あなたは${role}です。この記事の主要テーマに反対する立場で議論してください。`,
-        })
-      );
+            this.agents.push(
+                new DebateAgent({
+                    name: role,
+                    stance: "support",
+                    persona,
+                })
+            );
+        }
+
+        for (const role of this.roles.oppose) {
+
+            const persona = generatePersona({
+                name: role,
+                topic: this.topic,
+                stance: "oppose",
+            });
+
+            this.agents.push(
+                new DebateAgent({
+                    name: role,
+                    stance: "oppose",
+                    persona,
+                })
+            );
+        }
     }
-  }
 
   async initializeOpinions() {
     for (const agent of this.agents) {
@@ -55,7 +67,6 @@ class DebateManager {
         name: agent.name,
         basis: agent.name,
         stance: agent.stance,
-        side: agent.side,
         topicOpinion: agent.topicOpinion,
         articleOpinion: agent.articleOpinion,
       })),
@@ -112,7 +123,6 @@ class DebateManager {
       round,
       speaker: agent.name,
       stance: agent.stance,
-      side: agent.side,
       agentIndex: this.agents.indexOf(agent),
       text,
       ts: new Date(),

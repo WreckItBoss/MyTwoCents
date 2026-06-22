@@ -1,76 +1,90 @@
-const { llmChat } = require("../aiModel")
-const { renderPrompt } = require("./renderPrompt")
-class DebateAgents{
-    constructor(name, stance, persona){
-        this.name = name;
-        this.stance = stance;
-        this.persona = persona;
+const { llmChat } = require("../aiModel");
+const { renderPrompt } = require("../renderPrompt");
 
-        this.topic_opinion = None;
-        this.article_opinion = None;
-        this.latest_argument = None;
-        this.messages = [
-            {
-                role: "system",
-                content: persona,
-            },
-        ];
-    }
+class DebateAgent {
+  constructor({ name, stance, persona }) {
+    this.name = name;
+    this.stance = stance;
+    this.persona = persona;
 
-    async generateTopicOpinion(topic){
-        const prompt = renderPrompt("debatePrompt/opinionGenerator.txt", {
-            topic = this.topic,
-            stance = this.stance
-        });
+    this.topicOpinion = null;
+    this.articleOpinion = null;
+    this.latestArgument = null;
 
-        this.topic_opinion = await llmChat({
-            messages: [
-                { role: "system", content: this.persona},
-                { role: "message", content: prompt}
-            ]
-        });
+    this.messages = [
+      {
+        role: "system",
+        content: persona,
+      },
+    ];
+  }
 
-        return this.topic_opinion;
-    }
-    async generateArticleOpinion(topic, articleText){
-        const prompt = renderPrompt("debatePrompt/articleOpinionGenerator.txt",{
-            topic,
-            articleText,
-            stance = this.stance
-        });
+  async generateTopicOpinion(topic) {
+    const prompt = renderPrompt("debatePrompt/opinionGenerator.txt", {
+      topic,
+      stance: this.stance,
+    });
 
-        this.topic_opinion = await llmChat({
-            messages: [
-                {role: "system", content: this.persona},
-                {role: "user", content: prompt}
-            ]
-        });
+    this.topicOpinion = await llmChat({
+      messages: [
+        { role: "system", content: this.persona },
+        { role: "user", content: prompt },
+      ],
+    });
 
-        return this.topic_opinion;
-    }
-    async generateRebuttal(topic, articleText){
-        const prompt = renderPrompt("debatePrompt/rebuttalGenerator.txt", 
-            topic = this.topic,
-            stance = this.stance,
-            article_text = articleText,
-            article_opinion = this.article_opinion,
-            topic_opinion = this.topic_opinion
-        );
+    return this.topicOpinion;
+  }
 
-        this.messages.push({role: "user", content: prompt});
+  async generateArticleOpinion(topic, articleText) {
+    const prompt = renderPrompt("debatePrompt/articleOpinionGenerator.txt", {
+      topic,
+      articleText,
+      stance: this.stance,
+    });
 
-        const response = await llmChat({messages: this.messages});
+    this.articleOpinion = await llmChat({
+      messages: [
+        { role: "system", content: this.persona },
+        { role: "user", content: prompt },
+      ],
+    });
 
-        this.latestArgument = response;
-        return response;
-    }
-    observeMessage(speakerName, speakerStance, text){
-        this.messages.push({
-            role: "user",
-            content: `${speakerName} (${speakerStance}) said:\n${text}`,
-        });
-    }
-    
+    return this.articleOpinion;
+  }
+
+  async generateRebuttal(topic, articleText) {
+    const prompt = renderPrompt("debatePrompt/rebuttalGenerator.txt", {
+      topic,
+      stance: this.stance,
+      articleText,
+      articleOpinion: this.articleOpinion,
+      topicOpinion: this.topicOpinion,
+    });
+
+    this.messages.push({
+      role: "user",
+      content: prompt,
+    });
+
+    const response = await llmChat({
+      messages: this.messages,
+    });
+
+    this.messages.push({
+      role: "assistant",
+      content: response,
+    });
+
+    this.latestArgument = response;
+    return response;
+  }
+
+  observeMessage(speakerName, speakerStance, text) {
+    this.messages.push({
+      role: "user",
+      content: `${speakerName} (${speakerStance}) said:\n${text}`,
+    });
+  }
 }
 
-module.exports = DebateAgents;
+module.exports = DebateAgent;

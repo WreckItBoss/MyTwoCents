@@ -1,8 +1,8 @@
-const { getNews } = require("./newsservice.js");
-const DebateSession = require("../Models/DebateSession.js");
-const {articleToAgents} = require("./agentCreation/articleToAgent.js");
-const DebateManager = require("./debate/DebateManager.js");
-const { createAgents } = require("./agentCreation/agentCreation.js");
+const { getNews } = require("../newsservice.js");
+const DebateSession = require("../../Models/DebateSession.js");
+const {articleToAgents} = require("../agentCreation/articleToAgent.js");
+const DebateManager = require("./DebateManager.js");
+const { createAgents } = require("../agentCreation/agentCreation.js");
 
 function inferTopicFromArticle(article = {}){
   rturn (

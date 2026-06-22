@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { generateDebateFromText, generateDebateByArticleID } = require("../services/debate.js");
+const { generateDebateFromText, generateDebateByArticleID } = require("../services/debate/debate.js");
 
 // POST /api/debates/generate  { articleId, numRounds?, teamSize?, userPosition? }
 router.post("/generate", async (req, res) => {
