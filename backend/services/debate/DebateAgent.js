@@ -1,5 +1,5 @@
 const { llmChat } = require("../aiModel")
-
+const { renderPrompt } = require("./renderPrompt")
 class DebateAgents{
     constructor(name, stance, persona){
         this.name = name;
