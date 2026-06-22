@@ -1,5 +1,5 @@
 const DebateAgent = require("./DebateAgent");
-const { generatePersona } = require("./personaGenerator/personaGenerator");
+const { generatePersona } = require("../personaGenerator/personaGenerator");
 
 class DebateManager {
   constructor({ topic, articleText, roles, numRounds = 3 }) {
@@ -63,15 +63,15 @@ class DebateManager {
     }
 
     return {
-      agents: this.agents.map((agent) => ({
+    agents: this.agents.map((agent) => ({
         name: agent.name,
         basis: agent.name,
         stance: agent.stance,
         topicOpinion: agent.topicOpinion,
         articleOpinion: agent.articleOpinion,
-      })),
-      messages: this.debateHistory,
-      numRounds: this.numRounds,
+    })),
+    messages: this.debateHistory,
+    numRounds: this.numRounds,
     };
   }
 

@@ -1,18 +1,17 @@
-const { llmChat } = require("../../aiModel");
-const { renderPrompt } = require("../promptLoader");
+const { llmChat } = require("../aiModel");
+const { renderPrompt } = require("../renderPrompt");
 
 async function createAgents(articleText, n = 1) {
   const prompt = renderPrompt("agentCreation/agentCreation.txt", {
     N: n,
-    "2N": 2*n,
-    newsArticle: articleText,
+    article_text: articleText,
   });
 
   const raw = await llmChat({
     messages: [{ role: "user", content: prompt }],
-    temperature: 0,
   });
 
+  console.log("RAW AGENT RESPONSE:", raw);
   return parseAgents(raw);
 }
 

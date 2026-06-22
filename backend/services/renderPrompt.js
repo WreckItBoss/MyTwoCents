@@ -1,24 +1,19 @@
 const fs = require("fs");
 const path = require("path");
 
-const promptCache = {};
-
 function renderPrompt(filename, variables = {}) {
-    if (!promptCache[filename]) {
-        promptCache[filename] = fs.readFileSync(
-            path.join(__dirname, "prompts", filename),
-            "utf8"
-        );
-    }
+  const filePath = path.join(__dirname, filename);
 
-    let prompt = promptCache[filename];
+  let prompt = fs.readFileSync(filePath, "utf8");
 
-    for (const [key, value] of Object.entries(variables)) {
-        prompt = prompt.replace(
-            new RegExp(`{{${key}}}`, "g"),
-            value ?? ""
-        );
-    }
+  for (const [key, value] of Object.entries(variables)) {
+    const regex = new RegExp(`{${key}}`, "g");
+    prompt = prompt.replace(regex, value ?? "");
+  }
 
-    return prompt;
+  return prompt;
 }
+
+module.exports = {
+  renderPrompt,
+};

@@ -2,20 +2,29 @@ const mongoose = require("mongoose");
 const {Schema} = mongoose;
 
 const AgentSchema = new Schema({
-    name: String,
-    basis: String,
-    side: {type: String, enum: ["left", "right"], required: true},
-},{_id: false});
+  name: String,
+  basis: String,
+  stance: {
+    type: String,
+    enum: ["support", "oppose"],
+    required: true,
+  },
+}, { _id: false });
 
 const MessageSchema = new Schema({
-    speaker: String,
-    text: String,
-    round: Number,
-    agentIndex: Number, //index agents to Number for quick mapping
-    side: {type: String, enum:["left", "right"]},
-    ts: {type: Date, default: Date.now}},
-    {_id: false}
-);
+  speaker: String,
+  text: String,
+  round: Number,
+  agentIndex: Number,
+  stance: {
+    type: String,
+    enum: ["support", "oppose"],
+  },
+  ts: {
+    type: Date,
+    default: Date.now,
+  },
+}, { _id: false });
 
 const ParamsSchema = new Schema({
     model: String,

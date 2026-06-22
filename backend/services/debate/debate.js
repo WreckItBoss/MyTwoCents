@@ -5,7 +5,7 @@ const DebateManager = require("./DebateManager.js");
 const { createAgents } = require("../agentCreation/agentCreation.js");
 
 function inferTopicFromArticle(article = {}){
-  rturn (
+  return (
     article.topic ||
     article.title ||
     "この記事が扱う社会的・政治的トピック"
@@ -22,6 +22,7 @@ async function generateDebateByArticleID(articleId){
   }
 
   const topic = inferTopicFromArticle(article);
+  console.log("TOPIC:", topic);
 
   const articleText =
   article.content_original ||
@@ -30,7 +31,8 @@ async function generateDebateByArticleID(articleId){
   "";
 
   const roles = await createAgents(articleText, 1);
-
+  console.log("Generated Roles:", roles);
+  
   const manager = new DebateManager({
     topic,
     articleText,
@@ -38,28 +40,28 @@ async function generateDebateByArticleID(articleId){
   });
 
   const result = await manager.runDebate();
-
+  console.log("RESULT AGENTS:", result.agents);
   const sessionDoc = await DebateSession.create({
     articleId: article._id,
-    topic: [topic],
+    topics: [topic],
 
     agents: result.agents.map((agent) => ({
       name: agent.name,
       basis: agent.basis,
-      side: agent.side,
+      stance: agent.stance,
     })),
 
-    messages: result.messages.map((message) =>({
+    messages: result.messages.map((message) => ({
       speaker: message.speaker,
       text: message.text,
       round: message.round,
       agentIndex: message.agentIndex,
-      side: message.side,
+      stance: message.stance,
       ts: message.ts || new Date(),
     })),
 
     params:{
-      model: proccess.env.LLM_MODEL,
+      model: process.env.LLM_MODEL,
       maxAgents: result.agents.length,
       numRounds: result.numRounds,
     },

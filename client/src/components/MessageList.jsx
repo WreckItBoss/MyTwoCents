@@ -7,14 +7,15 @@ export default function MessageList({ agents = [], messages = [] }) {
         const agent =
           typeof m.agentIndex === "number" ? getAgentByIndex(m.agentIndex) : null;
 
-        const side = m.side || agent?.side || "left";
+        const stance = m.stance || agent?.stance || "support";
         const who = m.speaker || agent?.name || "Agent";
-        const stanceLabel = side === "left" ? "Support" : "Oppose";
+        const stanceLabel = stance === "support" ? "Support" : "Oppose";
         const when = m.ts ? new Date(m.ts).toLocaleTimeString() : "";
 
-        const alignSelf = side === "right" ? "end" : "start";
-        const bg = side === "right" ? "#fee2e2" : "#dbeafe";
-        const border = side === "right" ? "#fca5a5" : "#93c5fd";
+        const isOppose = stance === "oppose";
+        const alignSelf = isOppose ? "end" : "start";
+        const bg = isOppose ? "#fee2e2" : "#dbeafe";
+        const border = isOppose ? "#fca5a5" : "#93c5fd";
 
         return (
           <div
@@ -36,7 +37,7 @@ export default function MessageList({ agents = [], messages = [] }) {
                 style={{
                   marginLeft: 8,
                   fontSize: 12,
-                  color: side === "right" ? "#991b1b" : "#1d4ed8",
+                  color: isOppose ? "#991b1b" : "#1d4ed8",
                   fontWeight: 600,
                 }}
               >

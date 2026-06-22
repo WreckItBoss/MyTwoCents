@@ -20,7 +20,7 @@ class DebateAgent {
   }
 
   async generateTopicOpinion(topic) {
-    const prompt = renderPrompt("debatePrompt/opinionGenerator.txt", {
+    const prompt = renderPrompt("debate/debatePrompt/opinionGenerator.txt", {
       topic,
       stance: this.stance,
     });
@@ -36,7 +36,7 @@ class DebateAgent {
   }
 
   async generateArticleOpinion(topic, articleText) {
-    const prompt = renderPrompt("debatePrompt/articleOpinionGenerator.txt", {
+    const prompt = renderPrompt("debate/debatePrompt/articleOpinionGenerator.txt", {
       topic,
       articleText,
       stance: this.stance,
@@ -53,7 +53,7 @@ class DebateAgent {
   }
 
   async generateRebuttal(topic, articleText) {
-    const prompt = renderPrompt("debatePrompt/rebuttalGenerator.txt", {
+    const prompt = renderPrompt("debate/debatePrompt/rebuttalGenerator.txt", {
       topic,
       stance: this.stance,
       articleText,

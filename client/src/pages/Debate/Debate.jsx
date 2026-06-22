@@ -8,7 +8,7 @@ import "./Debate.css";
 export default function Debate() {
   const { articleId } = useParams();
 
-  const [teamSize] = useState(3);
+  const [teamSize] = useState(1);
   const [userPosition, setUserPosition] = useState(null);
   const [showChat, setShowChat] = useState(false);
 
@@ -57,8 +57,8 @@ export default function Debate() {
   const agents = debate?.agents ?? [];
   const messages = debate?.messages ?? [];
 
-  const supportAgents = agents.filter((a) => a.side === "left");
-  const opposeAgents = agents.filter((a) => a.side === "right");
+const supportAgents = agents.filter((a) => a.stance === "support");
+const opposeAgents = agents.filter((a) => a.stance === "oppose");
 
   return (
     <div className="debate-page">
