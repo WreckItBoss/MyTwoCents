@@ -72,3 +72,5 @@ class DebateAgents{
     }
     
 }
+
+module.exports = DebateAgents;
