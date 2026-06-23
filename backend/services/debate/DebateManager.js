@@ -2,12 +2,12 @@ const DebateAgent = require("./DebateAgent");
 const { generatePersona } = require("../personaGenerator/personaGenerator");
 
 class DebateManager {
-  constructor({ topic, articleText, roles, numRounds = 3 }) {
+  constructor({ topic, articleText, roles, numRounds = 3 , onEvent =()=>{}}) {
     this.topic = topic;
     this.articleText = articleText;
     this.roles = roles;
     this.numRounds = numRounds;
-
+    this.event = onEvent;
     this.agents = [];
     this.debateHistory = [];
   }
@@ -87,11 +87,12 @@ class DebateManager {
     const roundMessages = [];
 
     for (const agent of this.agents) {
+      this.event({type: "thinking", data: {speaker: agent.name, message: " is thinking..."}});
       const argument = await agent.generateRebuttal(
         this.topic,
         this.articleText
       );
-
+      this.event({type: "message", data: {speaker: agent.name, message: argument}});
       const message = this.createMessage(agent, argument, round);
 
       roundMessages.push({ agent, message });
@@ -105,10 +106,12 @@ class DebateManager {
 
   async runRebuttalRound(round) {
     for (const agent of this.agents) {
+      this.event({type: "thinking", data: {speaker: agent.name, message: " is thinking..."}});
       const argument = await agent.generateRebuttal(
         this.topic,
         this.articleText
       );
+      this.event({type: "message", data: {speaker: agent.name, message: argument}});
 
       const message = this.createMessage(agent, argument, round);
 
