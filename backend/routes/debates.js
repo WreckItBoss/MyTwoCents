@@ -48,21 +48,33 @@ router.post("/generateFromText", async (req, res) => {
 });
 
 router.get("/event-stream", async(req, res) => {
+  let onEvent;
   try {
+    let { articleId, numRounds = 1, teamSize = 1, userPosition = "agree" } = req.body;
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
-    const onEvent = (event) => {
+    onEvent = (event) => {
       res.write(`event: ${event.type}\n`);
       res.write(`data: ${JSON.stringify(event.data)}\n\n`);
     };
 
-    const result = await generateDebateByArticleID(articleId, { numRounds, teamSize, userPosition, onEvent});
-
+    await generateDebateByArticleID(articleId, { numRounds, teamSize, userPosition, onEvent});
+    
+    res.end();
 
   } catch (error) {
-    res.status(error.status || 500).json({error: eror.message ||  "server_error"});
+    if (onEvent) {
+        onEvent({
+            type: "error",
+            data: {
+                message: error.message || "server_error",
+            },
+        });
+    }
+
+    res.end();
   }
 });
 
