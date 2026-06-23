@@ -31,9 +31,9 @@ async function generateDebateByArticleID(articleId, options={}){
   article.title ||
   "";
 
-  onEvent({type: "agentCreation", data: "エージェント生成中"});
+  onEvent({type: "agent_creation", data: "エージェント生成中"});
   const roles = await createAgents(articleText, 1);
-  onEvent({type: "agentCreationCompleted", data: "エージェント生成完成"});
+  onEvent({type: "agent_creation_completed", data: "エージェント生成完成"});
 
   console.log("Generated Roles:", roles);
   
