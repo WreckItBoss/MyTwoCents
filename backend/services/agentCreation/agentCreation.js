@@ -6,7 +6,9 @@ async function createAgents(articleText, n = 1) {
     N: n,
     article_text: articleText,
   });
-
+  onEmit({
+    
+  })
   const raw = await llmChat({
     messages: [{ role: "user", content: prompt }],
   });
