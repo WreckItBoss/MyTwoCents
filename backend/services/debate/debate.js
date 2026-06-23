@@ -41,6 +41,7 @@ async function generateDebateByArticleID(articleId, options={}){
     topic,
     articleText,
     roles,
+    onEvent,
   });
 
   const result = await manager.runDebate();
