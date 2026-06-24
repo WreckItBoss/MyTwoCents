@@ -92,9 +92,9 @@ class DebateManager {
         this.topic,
         this.articleText
       );
-      this.event({type: "message", data: {speaker: agent.name, message: argument}});
+    
       const message = this.createMessage(agent, argument, round);
-
+      this.event({type: "message", data: message});
       roundMessages.push({ agent, message });
       this.debateHistory.push(message);
     }
@@ -111,9 +111,9 @@ class DebateManager {
         this.topic,
         this.articleText
       );
-      this.event({type: "message", data: {speaker: agent.name, message: argument}});
 
       const message = this.createMessage(agent, argument, round);
+      this.event({type: "message", data: message});
 
       this.debateHistory.push(message);
 

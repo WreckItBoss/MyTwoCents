@@ -13,7 +13,7 @@ function inferTopicFromArticle(article = {}){
 }
 
 async function generateDebateByArticleID(articleId, options={}){
-  const { numRounds = 3, teamSize = 1, userPosition = "Agree", onEvent = () => {}}; //don't use these numRounds, teamSize, userPosition yet. Keep it for now
+  const { numRounds = 3, teamSize = 1, userPosition = "Agree", onEvent = () => {}} = options; //don't use these numRounds, teamSize, userPosition yet. Keep it for now
   const article = await getNews(articleId);
 
   if (!article){
@@ -33,7 +33,7 @@ async function generateDebateByArticleID(articleId, options={}){
 
   onEvent({type: "agent_creation", data: "エージェント生成中"});
   const roles = await createAgents(articleText, 1);
-  onEvent({type: "agent_creation_completed", data: "エージェント生成完成"});
+  onEvent({type: "agent_creation_completed", data: {message: "エージェント生成完成", roles}});
 
   console.log("Generated Roles:", roles);
   

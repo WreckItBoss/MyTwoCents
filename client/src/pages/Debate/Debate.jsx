@@ -18,6 +18,8 @@ export default function Debate() {
   const [debateError, setDebateError] = useState("");
   const [debate, setDebate] = useState(null);
 
+  const [streamEvent, setStreamEvent] = useState("");
+
   useEffect(() => {
     (async () => {
       try {
@@ -37,11 +39,29 @@ export default function Debate() {
       setDebateLoading(true);
       setDebateError("");
 
-      const res = await generateDebate({
+      const stream = generateDebate({
         articleId,
         numRounds: 3,
         teamSize,
         userPosition,
+      })
+
+      stream.addEventListener("thinking", (event) => {
+        setStreamEvent(`${JSON.parse(event.data).speaker} is thinking... `);
+        console.log("thinking event: ", event.data);
+      }); 
+      stream.addEventListener("message", (event) => {
+        const payload = JSON.parse(event.data);
+        setDebate(payload)
+        console.log("Message ", JSON.parse(event.data).text);
+      });
+      stream.addEventListener("agent_creation", (event) => {
+        setStreamEvent("Creating speclialists...");
+        console.log("Agents are being created...");
+      });
+      stream.addEventListener("agent_creation_completed", (event) => {
+        setStreamEvent(`Specialists created: ${JSON.parse(event.data).roles}`)
+        console.log("Agent created: ", JSON.parse(event.data).roles);
       });
 
       setDebate(res);
