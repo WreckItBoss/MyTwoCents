@@ -62,6 +62,11 @@ router.get("/event-stream", async(req, res) => {
 
     await generateDebateByArticleID(articleId, { numRounds, teamSize, userPosition, onEvent});
     
+    onEvent({
+      type: "End",
+      data: {message: "Debate generation completed"}
+    });
+    
     res.end();
 
   } catch (error) {
