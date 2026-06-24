@@ -82,7 +82,7 @@ export default function Debate() {
             ]
           }
         })
-        setStreamEvent(`Specialists created: ${incomingAgents}`)
+        setStreamEvent("Specialists created");
         console.log("Agent created: ", incomingAgents);
       });
 
