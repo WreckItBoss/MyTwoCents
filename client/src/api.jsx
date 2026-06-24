@@ -1,17 +1,5 @@
 const BASE = import.meta.env.VITE_API_BASE;
 
-// async function http(url, options={}){
-//     const res = await fetch(`{BASE}${url}`, {
-//         headers: {"Content-Type": "application/json"};
-//         ...options,
-//     });
-//     if (!res.ok){
-//         const text = await res.text().catch(()=>"");
-//         throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
-//     }
-//     return res.json();
-// }
-
 async function http(url, options = {}) {
   const res = await fetch(`${BASE}${url}`, {
     headers: { "Content-Type": "application/json" },
@@ -47,9 +35,21 @@ export function getArticle(articleId){
   return http(`/api/news/${articleId}`);
 }
 
-export function generateDebate({articleId, numRounds = 1, teamSize = 3, userPosition}){
-    return http(`/api/debates/generate`,{
-        method: "POST",
-        body: JSON.stringify({articleId, numRounds, teamSize, userPosition}),
-    });
+// export function generateDebate({articleId, numRounds = 1, teamSize = 3, userPosition}){
+//     return http(`/api/debates/generate`,{
+//         method: "POST",
+//         body: JSON.stringify({articleId, numRounds, teamSize, userPosition}),
+//     });
+// }
+
+export function generateDebate({articleId, numRounds = 1, teamSize = 1, userPosition}){
+  const params = new URLSearchParams({
+    articleId,
+    numRounds,
+    teamSize,
+    userPosition
+  })
+
+  return new EventSource(`/api/debates/event-stream?${params.toString()}`)
 }
+
