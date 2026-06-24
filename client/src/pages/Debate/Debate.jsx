@@ -64,10 +64,12 @@ export default function Debate() {
         
         console.log("Message ", JSON.parse(event.data).text);
       });
+
       stream.addEventListener("agent_creation", (event) => {
         setStreamEvent("Creating speclialists...");
         console.log("Agents are being created...");
       });
+
       stream.addEventListener("agent_creation_completed", (event) => {
         const incomingAgents = JSON.parse(event.data).roles;
         const supportAgents = incomingAgents.support.map((role)=>({name: role, stance: "support"}));
@@ -86,7 +88,13 @@ export default function Debate() {
         console.log("Agent created: ", incomingAgents);
       });
 
-      stream.addEventListener("")
+      stream.addEventListener("done", (event)=>{
+        const data = JSON.parse(event.data);
+        setStreamEvent(data.message);
+        console.log(data.message);
+        setDebateLoading(false);
+        stream.close();
+      })
 
       setShowChat(true);
     } catch (e) {
