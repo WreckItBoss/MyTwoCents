@@ -50,7 +50,7 @@ router.post("/generateFromText", async (req, res) => {
 router.get("/event-stream", async(req, res) => {
   let onEvent;
   try {
-    let { articleId, numRounds = 1, teamSize = 1, userPosition = "agree" } = req.body;
+    let { articleId, numRounds = 1, teamSize = 1, userPosition = "agree" } = req.query;
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -66,7 +66,7 @@ router.get("/event-stream", async(req, res) => {
       type: "End",
       data: {message: "Debate generation completed"}
     });
-    
+
     res.end();
 
   } catch (error) {
