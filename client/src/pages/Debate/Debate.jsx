@@ -16,7 +16,7 @@ export default function Debate() {
   const [loadingArticle, setLoadingArticle] = useState(true);
   const [debateLoading, setDebateLoading] = useState(false);
   const [debateError, setDebateError] = useState("");
-  const [debate, setDebate] = useState(null);
+  const [debate, setDebate] = useState({topics: [], agents: [], messages: []});
 
   const [streamEvent, setStreamEvent] = useState("");
 
@@ -51,8 +51,17 @@ export default function Debate() {
         console.log("thinking event: ", event.data);
       }); 
       stream.addEventListener("message", (event) => {
-        const payload = JSON.parse(event.data);
-        setDebate(payload)
+        const incomingMessages = JSON.parse(event.data);
+        setDebate((prev)=>{
+          return{
+            ...prev,
+            messages: [
+              ...prev.messages,
+              incomingMessages
+            ]
+          }
+        });
+        
         console.log("Message ", JSON.parse(event.data).text);
       });
       stream.addEventListener("agent_creation", (event) => {
@@ -60,8 +69,21 @@ export default function Debate() {
         console.log("Agents are being created...");
       });
       stream.addEventListener("agent_creation_completed", (event) => {
-        setStreamEvent(`Specialists created: ${JSON.parse(event.data).roles}`)
-        console.log("Agent created: ", JSON.parse(event.data).roles);
+        const incomingAgents = JSON.parse(event.data).roles;
+        const supportAgents = incomingAgents.support.map((role)=>({name: role, stance: "support"}));
+        const opposeAgents = incomingAgents.oppose.map((role) => ({name: role, stance: "oppose"}));
+        setDebate((prev) => {
+          return{
+            ...prev,
+            agents: [
+              ...prev.agents,
+              ...supportAgents,
+              ...opposeAgents
+            ]
+          }
+        })
+        setStreamEvent(`Specialists created: ${incomingAgents}`)
+        console.log("Agent created: ", incomingAgents);
       });
 
       setDebate(res);
