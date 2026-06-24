@@ -86,6 +86,8 @@ export default function Debate() {
         console.log("Agent created: ", incomingAgents);
       });
 
+      stream.addEventListener("")
+
       setShowChat(true);
     } catch (e) {
       setDebateError(e.message);
