@@ -17,7 +17,7 @@ export default function Debate() {
   const [debateLoading, setDebateLoading] = useState(false);
   const [debateError, setDebateError] = useState("");
   const [debate, setDebate] = useState({topics: [], agents: [], messages: []});
-
+  const [hasGenerated, setHasGenerated] = useState(false);
   const [streamEvent, setStreamEvent] = useState("");
 
   useEffect(() => {
@@ -36,6 +36,14 @@ export default function Debate() {
 
   const onGenerate = async () => {
     try {
+      setDebate({
+        topics: [article?.topic || article?.title || ""],
+        agents: [],
+        messages: [],
+      });
+      setStreamEvent("");
+      setHasGenerated(true);
+      setShowChat(true);
       setDebateLoading(true);
       setDebateError("");
 
@@ -45,6 +53,19 @@ export default function Debate() {
         teamSize,
         userPosition,
       })
+      stream.onerror = (err) => {
+        console.error("SSE connection error:", err);
+        setDebateLoading(false);
+        setStreamEvent("Stream connection closed or failed.");
+        stream.close();
+      };
+
+      stream.addEventListener("stream_error", (event) => {
+        const data = JSON.parse(event.data);
+        setDebateError(data.message);
+        setDebateLoading(false);
+        stream.close();
+      });
 
       stream.addEventListener("thinking", (event) => {
         setStreamEvent(`${JSON.parse(event.data).speaker} is thinking... `);
@@ -99,8 +120,6 @@ export default function Debate() {
       setShowChat(true);
     } catch (e) {
       setDebateError(e.message);
-    } finally {
-      setDebateLoading(false);
     }
   };
 
@@ -108,8 +127,8 @@ export default function Debate() {
   const agents = debate?.agents ?? [];
   const messages = debate?.messages ?? [];
 
-const supportAgents = agents.filter((a) => a.stance === "support");
-const opposeAgents = agents.filter((a) => a.stance === "oppose");
+  const supportAgents = agents.filter((a) => a.stance === "support");
+  const opposeAgents = agents.filter((a) => a.stance === "oppose");
 
   return (
     <div className="debate-page">
@@ -176,7 +195,7 @@ const opposeAgents = agents.filter((a) => a.stance === "oppose");
               </div>
 
               <div className="panel-body">
-                {!debate ? (
+                {!hasGenerated? (
                   <div className="debate-controls">
                     <div className="control-row">
                       <p className="toggle-question">
@@ -252,8 +271,14 @@ const opposeAgents = agents.filter((a) => a.stance === "oppose");
                         </div>
                       </div>
                     </div>
-
                     <MessageList agents={agents} messages={messages} />
+                                        {
+                      streamEvent && (
+                        <div style ={{ fontSize: 13, color: "#666", marginBottom: 12}}>
+                          {streamEvent}
+                        </div>
+                      )
+                    }
                   </>
                 )}
               </div>

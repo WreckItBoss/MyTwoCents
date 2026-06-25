@@ -50,6 +50,6 @@ export function generateDebate({articleId, numRounds = 1, teamSize = 1, userPosi
     userPosition
   })
 
-  return new EventSource(`/api/debates/event-stream?${params.toString()}`)
+  return new EventSource(`${BASE}/api/debates/event-stream?${params.toString()}`)
 }
 

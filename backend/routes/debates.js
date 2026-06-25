@@ -55,6 +55,7 @@ router.get("/event-stream", async(req, res) => {
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
+    console.log("SSE connected:", req.query.articleId);
     onEvent = (event) => {
       res.write(`event: ${event.type}\n`);
       res.write(`data: ${JSON.stringify(event.data)}\n\n`);
@@ -70,9 +71,10 @@ router.get("/event-stream", async(req, res) => {
     res.end();
 
   } catch (error) {
+    console.error("SSE error:", error);
     if (onEvent) {
         onEvent({
-            type: "error",
+            type: "stream_error",
             data: {
                 message: error.message || "server_error",
             },
