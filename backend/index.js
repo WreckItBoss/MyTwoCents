@@ -27,7 +27,7 @@ app.use("/api/sessions", sessionRoutes);
 app.get('/', (req, res)=>{ res.send("Backend is running🚀") });
 
 const server = http.createServer(app);
-
+console.log(server)
 connectDB(MONGO_URL)
   .then(() => server.listen(PORT, () => console.log(`Listening to PORT ${PORT}`)))
   .catch((e) => {
