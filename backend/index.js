@@ -2,6 +2,7 @@
 //test
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
 require('dotenv').config();
 
 //Other File Dependencies
@@ -25,8 +26,10 @@ app.use("/api/sessions", sessionRoutes);
 //Text to see if the back is running
 app.get('/', (req, res)=>{ res.send("Backend is running🚀") });
 
+const server = http.createServer(app);
+
 connectDB(MONGO_URL)
-  .then(() => app.listen(PORT, () => console.log(`Listening to PORT ${PORT}`)))
+  .then(() => server.listen(PORT, () => console.log(`Listening to PORT ${PORT}`)))
   .catch((e) => {
     console.error("Mongo connect failed:", e.message);
     process.exit(1);
