@@ -8,8 +8,9 @@ require('dotenv').config();
 //Other File Dependencies
 const {connectDB} = require("./db.js");
 const newsRoutes = require("./routes/news");
-const debateRoutes = require("./routes/debates.js")
+const debateRoutes = require("./routes/debates.js");
 const sessionRoutes = require("./routes/sessions");
+const webSocket = require("./websockets/debateSockets.js");
 //PORTS and MONGO URI
 const PORT = Number(process.env.PORT) || 5050;
 const MONGO_URL = process.env.MONGO_URL;
@@ -27,7 +28,9 @@ app.use("/api/sessions", sessionRoutes);
 app.get('/', (req, res)=>{ res.send("Backend is running🚀") });
 
 const server = http.createServer(app);
-console.log(server)
+
+webSocket(server)
+
 connectDB(MONGO_URL)
   .then(() => server.listen(PORT, () => console.log(`Listening to PORT ${PORT}`)))
   .catch((e) => {
