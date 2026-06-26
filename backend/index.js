@@ -10,7 +10,7 @@ const {connectDB} = require("./db.js");
 const newsRoutes = require("./routes/news");
 const debateRoutes = require("./routes/debates.js");
 const sessionRoutes = require("./routes/sessions");
-const webSocket = require("./websockets/debateSockets.js");
+const {webSocket} = require("./websockets/debateSockets.js");
 //PORTS and MONGO URI
 const PORT = Number(process.env.PORT) || 5050;
 const MONGO_URL = process.env.MONGO_URL;
